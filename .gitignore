@@ -138,6 +138,7 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
-
-.gocqhttp
+sample.txt
+sample(unescape).txt
+gocqhttp
 # End of https://www.toptal.com/developers/gitignore/api/python

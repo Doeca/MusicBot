@@ -1,4 +1,8 @@
-from .util import *
+
+import json
+from . import cron
+from . import util
+from . import config
 from nonebot import on_command,  on_regex
 from nonebot.log import logger
 from nonebot.adapters import Message
@@ -15,20 +19,23 @@ commandMatcher = on_command("orderStart", permission=SUPERUSER)
 banMatcher = on_command("ban", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER))
 
+
 @listMatcher.handle()
 async def retList(e: Event, bot: Bot):
-    await bot.send(e, generateList(), at_sender=True, reply_message=True)
+    await bot.send(e, util.generateList(), at_sender=True, reply_message=True)
+
 
 @playingMatcher.handle()
 async def retList(e: Event, bot: Bot):
-    await bot.send(e, generatePlay(), at_sender=True, reply_message=True)
+    await bot.send(e, util.generatePlay(), at_sender=True, reply_message=True)
+
 
 @banMatcher.handle()
 async def banHandle(matcher: Matcher, args: Message = CommandArg()):
     id = args.extract_plain_text().strip()
     logger.debug(f"ID : {id}")
     if id == '':
-        id = currentPlay()
+        id = util.currentPlay()
     elif id.isdigit():
         id = int(id)
     else:
@@ -36,13 +43,18 @@ async def banHandle(matcher: Matcher, args: Message = CommandArg()):
         return
     if id == 0:
         return
-    if id <= len(orderList):
+    if id <= len(config.getValue('orderList')):
         matcher.set_arg("arg", str(id))
 
-@banMatcher.got("arg",prompt="请输入歌曲列表中的序号 or 直接输入歌曲名")
+
+@banMatcher.got("arg", prompt="请输入歌曲列表中的序号 or 直接输入歌曲名")
 async def banID(arg: str = ArgStr('arg')):
+    blackList = config.getValue('blackList')
+    orderList = config.getValue('orderList')
+
     line = arg.strip()
     name = ''
+
     if line == '':
         await banMatcher.finish(f"操作已取消")
     elif line.isdigit():
@@ -50,8 +62,8 @@ async def banID(arg: str = ArgStr('arg')):
         if id == 0 or id > len(orderList):
             await banMatcher.reject(f"歌曲序号：{id}不存在，请重新输入")
         name = orderList[id-1]['name']
-        if id == currentPlay():
-            addOperation('next')
+        if id == util.currentPlay():
+            util.addOperation('next')
     else:
         name = line
 
@@ -66,7 +78,7 @@ async def banID(arg: str = ArgStr('arg')):
 
     await banMatcher.finish(f"歌曲《{name}》已加入黑名单")
 
+
 @commandMatcher.handle()
 async def startOrder():
-    await run_start_order()
-    await commandMatcher.send("已开启点歌")
+    await cron.run_start_order()

@@ -28,7 +28,6 @@ nonebot.load_from_toml("pyproject.toml")
 # Modify some config / config depends on loaded configs
 # 
 config = driver.config
-print(config)
 # do something...
 
 

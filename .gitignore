@@ -141,4 +141,5 @@ dmypy.json
 sample.txt
 sample(unescape).txt
 gocqhttp
+store
 # End of https://www.toptal.com/developers/gitignore/api/python

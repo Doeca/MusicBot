@@ -27,12 +27,15 @@ plugin_config = Config.parse_obj(get_driver().config)
 logger.debug(plugin_config.bot_id)
 logger.debug(str(plugin_config.notice_id))
 
-if os.path.exists("./blackList.json"):
-    fs = open("./blackList.json", 'r')
+if os.path.exists("./store/blackList.json"):
+    fs = open("./store/blackList.json", 'r')
     blackList = json.load(fs)
     fs.close()
 else:
     blackList = list()
+
+if not os.path.exists('./store'):
+    os.makedirs('./store')
 
 orderSwitch = 0  # 点歌开关
 orderPeople = dict()  # 存放用户点歌数量
@@ -46,10 +49,8 @@ maxList = 30
 def unescape(str: str):
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
-
 def orderStatus():
     return orderSwitch
-
 
 def currentPlay():
     id = 0
@@ -62,7 +63,6 @@ def currentPlay():
             break
     id = tmpID
     return id
-
 
 def generateList():
     length = len(orderList)
@@ -82,6 +82,11 @@ def generateList():
             res += f"No.{v['id']} {v['name']} - {v['author']}"
         return res
 
+def addOperation(type:str,para:str = '0'):
+    temp = dict()
+    temp['type'] = type
+    temp['para'] = para
+    opertaionList.append(temp)
 
 def generatePlay():
     id = currentPlay()
@@ -93,7 +98,7 @@ def generatePlay():
 async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):
     # global orderList
     if name in blackList:
-        await bot.send(e, f"歌曲{name}在黑名单中，无法进行点歌🐵", True, True)
+        await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):
         await bot.send(e, f"每时段每人限点2首，你无法继续点歌🫣", at_sender=True, reply_message=True)
@@ -188,4 +193,6 @@ async def play_id(id: int = 1):
 
 @app.get("/getOperations")
 def get_operations():
-    return []
+    res = opertaionList[:]
+    opertaionList.clear()
+    return res

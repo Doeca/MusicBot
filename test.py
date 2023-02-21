@@ -1,8 +1,8 @@
 import requests
 import base64
 import json
- 
- 
+
+
 def get_key_from_url(url: str, userid: str) -> str:
     """
     通过请求m3u8文件中的key的url,获取解密视频key的base64字符串密钥
@@ -21,21 +21,15 @@ def get_key_from_url(url: str, userid: str) -> str:
         for index in range(0, len(rsp_data)):
             result_list.append(
                 rsp_data[index] ^ userid_bytes[index])
-        #print(result_list)
         return base64.b64encode(bytes(result_list)).decode()
     else:
         print(f"获取异常，请求返回值：{rsp.text}")
         return ''
- 
- 
-if __name__ == '__main__':
-    l = list()
-    for i in range(5):
-        temp = dict()
-        temp['in'] = '1'
-        l.append(temp)
-    for v in l:
-        v['in'] = 2
-    print(json.dumps(l))
-    
-    
+
+
+
+file_log = '2023_02_21_10.log'
+path = f"./store/{file_log}"
+fp = open(path, "x")
+fp.write("123123")
+fp.close()

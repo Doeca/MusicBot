@@ -3,12 +3,12 @@ import urllib.parse
 import requests
 from .util import *
 from typing import Union
-from nonebot import on_command, on_message, on_regex
+from nonebot import on_command, on_fullmatch, on_regex
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import RegexGroup
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent, Event
 
 
 # neteaseMatcher = on_regex("http(s|):\/\/music\.163\.com.*id=([0-9]*)",)
@@ -18,12 +18,6 @@ from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEv
 #     musicID = foo[1]
 
 #     print(musicID)
-anyMatcher = on_message(permission=SUPERUSER)
-
-"""
-QQ音乐的匹配，如果没有songmid说明是iOS端来的会员歌曲，如果有就是安卓端发的
-没有songmid，通过歌名搜索歌曲，后端判断是否为vip歌曲，返回确保能播放的url
-"""
 
 
 """
@@ -40,9 +34,11 @@ QQ音乐的匹配，如果没有songmid说明是iOS端来的会员歌曲，如�
 #     # logger.add(e.get_plaintext(),level="INFO")
 #     # print(e.get_message())
 
-
-qqMatcher = on_regex('\[CQ:json,data={"app":"com\.tencent\.structmsg',)
-
+wyMatcher = on_regex('\[CQ:json.*?"appid":100495085')
+qqMatcher = on_regex('\[CQ:json.*?"appid":100497308')
+listMatcher = on_regex('^(歌曲列表|播放列表|待播清单)$')
+playingMatcher = on_regex('正在播放|当前播放|放的是什么')
+commandMatcher = on_command("orderStart", permission=SUPERUSER)
 
 """
 点歌时间段，11点30分-12:30分，超时后将停止点歌
@@ -50,11 +46,21 @@ qqMatcher = on_regex('\[CQ:json,data={"app":"com\.tencent\.structmsg',)
 """
 
 
+@listMatcher.handle()
+async def retList(e: Event, bot: Bot):
+    await bot.send(e, generateList(), at_sender=True, reply_message=True)
+
+
+@playingMatcher.handle()
+async def retList(e: Event, bot: Bot):
+    await bot.send(e, generatePlay(), at_sender=True, reply_message=True)
+
+
 @qqMatcher.handle()
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
-    # if (orderSwitch == 0):
-    #     await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
-    #     return
+    if (orderStatus() == 0):
+        await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        return
     msg = e.raw_message
     matchObj = re.search(r'"jumpUrl":"(.*?)"&#44;"p', msg, re.M | re.I)
     detailUrl = matchObj.group(1)
@@ -64,4 +70,41 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
     mid = matchObj.group(1)
     logger.debug(f"MID: {mid}")
 
+    resp = requests.get(f"https://musicapi.doeca.cc/qq/detail?id={mid}")
+    if resp.status_code != 200:
+        logger.debug(resp.text)
+        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        return
+    songInfo = resp.json()
+    urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
+
+    await addToList(e, bot, songInfo['name'], songInfo['author'], urls)
+
     # 访问musicAPI，获取songURL等信息，若获取失败则提示点歌失败
+
+
+@wyMatcher.handle()
+async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
+    if (orderStatus() == 0):
+        await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        return
+    msg = e.raw_message
+    matchObj = re.search(r'id=([0-9]{1,12})"', msg, re.M | re.I)
+    id = matchObj.group(1)
+    logger.debug(f"ID: {id}")
+    resp = requests.get(f"https://musicapi.doeca.cc/wy/detail?id={id}")
+    if resp.status_code != 200:
+        logger.debug(resp.text)
+        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        return
+    songInfo = resp.json()
+    urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
+
+    await addToList(e, bot, songInfo['name'], songInfo['author'], urls)
+    # 访问musicAPI，获取songURL等信息，若获取失败则提示点歌失败
+
+
+@commandMatcher.handle()
+async def startOrder():
+    await run_start_order()
+    await commandMatcher.send("已开启点歌")

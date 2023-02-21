@@ -53,3 +53,16 @@ def generatePlay():
     if (id == 0):
         return '👁‍🗨当前没有在播放歌曲'
     return f"🅿️当前歌曲【{orderList[id-1]['name']} - {orderList[id-1]['author']}】"
+
+
+def generateBlack():
+    blackList = config.getValue('blackList')
+    length = len(blackList)
+    res = '📄歌曲黑名单：\n'
+    i = 0
+    for v in blackList:
+        res += f"《{v}》"
+        if i != length - 1:
+            res += "，"
+        i += 1
+    return res

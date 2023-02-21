@@ -65,3 +65,8 @@ async def banID(arg: str = ArgStr('arg')):
     fs.close()
 
     await banMatcher.finish(f"歌曲《{name}》已加入黑名单")
+
+@commandMatcher.handle()
+async def startOrder():
+    await run_start_order()
+    await commandMatcher.send("已开启点歌")

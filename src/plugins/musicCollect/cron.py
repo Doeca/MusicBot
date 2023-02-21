@@ -8,7 +8,7 @@ from nonebot import require
 require("nonebot_plugin_apscheduler")
 
 
-@scheduler.scheduled_job("cron", id="start", hour="2,17", minute=14)
+@scheduler.scheduled_job("cron", id="start", hour="11,17", minute=30)
 async def run_start_order():
     if (config.getValue('orderSwitch') == 1):
         return

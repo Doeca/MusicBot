@@ -133,7 +133,7 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)
 
 
-@scheduler.scheduled_job("cron", id="start", hour="14,17", minute=41)
+@scheduler.scheduled_job("cron", id="start", hour="11,17", minute=30)
 async def run_start_order():
     global file_log
     global orderSwitch

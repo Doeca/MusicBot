@@ -8,7 +8,7 @@ from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
-apiUrl = "https://musicapi.doeca.cc:20050"
+apiUrl = "https://musicback.doeca.cc:20050"
 
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085')
 qqMatcher = on_regex('\[CQ:json.*?"appid":100497308')

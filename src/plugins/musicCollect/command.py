@@ -93,4 +93,5 @@ async def banID(arg: str = ArgStr('arg')):
 
 @commandMatcher.handle()
 async def startOrder():
+    logger.debug("receive")
     await cron.run_start_order()

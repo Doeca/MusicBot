@@ -88,6 +88,7 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     tempInfo['cover'] = urls[2]
     tempInfo['played'] = 0
     tempInfo['id'] = len(orderList) + 1
+    tempInfo['uin'] = e.user_id
 
     orderList.append(tempInfo)
     path = f"./store/{config.getValue('fileLog')}"

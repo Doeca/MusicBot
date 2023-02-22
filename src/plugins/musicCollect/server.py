@@ -2,7 +2,9 @@ import nonebot
 from . import config
 from nonebot import get_bot
 from fastapi import FastAPI
+from nonebot.adapters.onebot.v11 import Bot
 from fastapi.middleware.cors import CORSMiddleware
+
 
 app: FastAPI = nonebot.get_app()
 app.add_middleware(
@@ -42,3 +44,10 @@ def get_operations():
     res = opertaionList[:]
     opertaionList.clear()
     return res
+
+
+@app.get("/notifyLogout")
+def get_operations():
+    bot: Bot = get_bot(config.bot.bot_id)
+    bot.send_private_msg(user_id=1124468334, message="网易云登陆已掉线，请重新扫码登陆")
+    return {"res": 1}

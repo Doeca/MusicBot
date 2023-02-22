@@ -47,7 +47,7 @@ def get_operations():
 
 
 @app.get("/notifyLogout")
-def get_operations():
+async def get_operations():
     bot: Bot = get_bot(config.bot.bot_id)
-    bot.send_private_msg(user_id=1124468334, message="网易云登陆已掉线，请重新扫码登陆")
+    await bot.send_private_msg(user_id=1124468334, message="网易云登陆已掉线，请重新扫码登陆")
     return {"res": 1}

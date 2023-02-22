@@ -8,6 +8,7 @@ from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
+apiUrl = "https://musicapi.doeca.cc:20050"
 
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085')
 qqMatcher = on_regex('\[CQ:json.*?"appid":100497308')
@@ -27,7 +28,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
     mid = matchObj.group(1)
     logger.debug(f"MID: {mid}")
 
-    resp = requests.get(f"https://musicapi.doeca.cc/qq/detail?id={mid}")
+    resp = requests.get(f"{apiUrl}/qq/detail?id={mid}")
     if resp.status_code != 200:
         logger.debug(resp.text)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
@@ -47,7 +48,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
     matchObj = re.search(r'id=([0-9]{1,13}).*', msg, re.M | re.I)
     id = matchObj.group(1)
     logger.debug(f"ID: {id}")
-    resp = requests.get(f"https://musicapi.doeca.cc/wy/detail?id={id}")
+    resp = requests.get(f"{apiUrl}/wy/detail?id={id}")
     if resp.status_code != 200:
         logger.debug(resp.text)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
@@ -71,8 +72,8 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):
         await bot.send(e, f"每时段每人限点2首，你无法继续点歌🫣", at_sender=True, reply_message=True)
         return
-    if len(orderList) > config.getValue('maxList'):
-        await bot.send(e, f"此时段点歌数量已达{maxList}首，无法继续点歌了💦",
+    if len(orderList) >= config.getValue('maxList'):
+        await bot.send(e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",
                        at_sender=True, reply_message=True)
         return
     orderPeople[e.user_id] = (0 if orderPeople.get(
@@ -90,10 +91,10 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     orderList.append(tempInfo)
     path = f"./store/{config.getValue('fileLog')}"
-
-    logger.debug(path)
     fp = open(path, "w")
     fp.write(json.dumps(orderList))
     fp.close()
 
+    if(tempInfo['id'] >= config.getValue('maxList')):
+        await bot.set_group_card(config.bot.notice_id,config.bot.bot_id,'点歌列表已满，努力播放中～')
     await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)

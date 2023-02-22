@@ -65,4 +65,6 @@ def generateBlack():
         if i != length - 1:
             res += "，"
         i += 1
+    if i == 0:
+        res += "🈚️任何歌曲"
     return res

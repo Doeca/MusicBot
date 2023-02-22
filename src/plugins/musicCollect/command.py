@@ -3,7 +3,7 @@ import json
 from . import cron
 from . import util
 from . import config
-from nonebot import on_command,  on_regex, on_keyword
+from nonebot import on_command,  on_regex, on_fullmatch
 from nonebot.log import logger
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
@@ -13,14 +13,14 @@ from nonebot.adapters.onebot.v11 import Bot, Event
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 
-listMatcher = on_regex('^(歌曲列表|播放列表|待播清单)$')
-playingMatcher = on_regex('正在播放|当前播放|放的是什么')
+listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$')
+playingMatcher = on_regex('正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌')
 commandMatcher = on_command("orderStart", permission=SUPERUSER)
 banMatcher = on_command("ban", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER))
 nextMatcher = on_command("next", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER))
-blackMatcher = on_keyword("黑名单列表")
+blackMatcher = on_fullmatch("黑名单列表")
 
 @blackMatcher.handle()
 async def blackhandle(e: Event, bot: Bot):

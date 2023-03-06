@@ -1,4 +1,3 @@
-
 import json
 from . import cron
 from . import util
@@ -15,11 +14,8 @@ from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent]) -> bool:
-    logger.debug(e.message_type)
-    logger.debug(config.bot.notice_id)
     if e.message_type == 'private':
         return True
-    logger.debug(str(e.group_id == config.bot.notice_id))
     return e.group_id == config.bot.notice_id
 
 

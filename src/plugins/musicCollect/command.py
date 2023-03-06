@@ -3,28 +3,44 @@ import json
 from . import cron
 from . import util
 from . import config
+from typing import Union
 from nonebot import on_command,  on_regex, on_fullmatch
 from nonebot.log import logger
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import Bot, Event
+from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent, PrivateMessageEvent
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 
-listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$')
-playingMatcher = on_regex('正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌')
-commandMatcher = on_command("orderStart", permission=SUPERUSER)
+async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent]) -> bool:
+    logger.debug(e.message_type)
+    logger.debug(config.bot.notice_id)
+    if e.message_type == 'private':
+        return True
+    logger.debug(str(e.group_id == config.bot.notice_id))
+    return e.group_id == config.bot.notice_id
+
+
+listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=group_checker)
+playingMatcher = on_regex(
+    '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=group_checker)
+commandMatcher = on_command(
+    "orderStart", permission=SUPERUSER, rule=group_checker)
 banMatcher = on_command("ban", permission=(
-    SUPERUSER | GROUP_ADMIN | GROUP_OWNER))
+    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
+keyMatcher = on_command("addkey", permission=(
+    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
 nextMatcher = on_command("next", permission=(
-    SUPERUSER | GROUP_ADMIN | GROUP_OWNER))
-blackMatcher = on_fullmatch("黑名单列表")
+    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
+blackMatcher = on_fullmatch("黑名单列表", rule=group_checker)
+
 
 @blackMatcher.handle()
 async def blackhandle(e: Event, bot: Bot):
     await bot.send(e, util.generateBlack(), at_sender=True, reply_message=True)
+
 
 @nextMatcher.handle()
 async def next(e: Event, bot: Bot):
@@ -95,3 +111,30 @@ async def banID(arg: str = ArgStr('arg')):
 async def startOrder():
     logger.debug("receive")
     await cron.run_start_order()
+
+
+@keyMatcher.handle()
+async def banHandle(matcher: Matcher, args: Message = CommandArg()):
+    key = args.extract_plain_text().strip()
+    logger.debug(f"Key : {key}")
+    if key != '':
+        matcher.set_arg("arg", key)
+
+
+@keyMatcher.got("arg", prompt="请输入关键词（注意，若关键词过短会影响其他歌曲）")
+async def banID(arg: str = ArgStr('arg')):
+    blackKeyList = config.getValue('blackKeyList')
+    name = arg.strip()
+    if name == '':
+        await keyMatcher.finish(f"操作已取消")
+
+    if name in blackKeyList:
+        await keyMatcher.reject(f"关键词'{name}'已存在于黑名单中，无需重复加入")
+    blackKeyList.append(name)
+
+    fs = open("./store/blackKeyList.json", 'w')
+    blackKeyListStr = json.dumps(blackKeyList)
+    fs.write(blackKeyListStr)
+    fs.close()
+
+    await banMatcher.finish(f"关键词'{name}'已加入黑名单")

@@ -67,4 +67,27 @@ def generateBlack():
         i += 1
     if i == 0:
         res += "🈚️任何歌曲"
+
+    blackKeyList = config.getValue('blackKeyList')
+    length = len(blackKeyList)
+    res += '\n关键词列表：\n'
+    j = 0
+    for v in blackKeyList:
+        res += f"'{v}'"
+        if j != length - 1:
+            res += "，"
+        j += 1
+    if j == 0:
+        res += "🈚️任何关键词\n"
     return res
+
+
+def isBlack(name: str):
+    blackList = config.getValue('blackList')
+    blackKeyList = config.getValue('blackKeyList')
+    if name in blackList:
+        return True
+    for v in blackKeyList:
+        if name.find(v) != -1:
+            return True
+    return False

@@ -8,7 +8,7 @@ from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
-apiUrl = "http://musicapi.doeca.cc:3001"
+apiUrl = config.bot.music_api
 
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085')
 qqMatcher = on_regex('\[CQ:json.*?"appid":100497308')
@@ -66,7 +66,7 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     orderPeople = config.getValue('orderPeople')
     orderList = config.getValue('orderList')
     maxList = config.getValue('maxList')
-    if name in blackList:
+    if util.isBlack(name):
         await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):

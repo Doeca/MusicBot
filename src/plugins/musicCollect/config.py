@@ -3,9 +3,12 @@ import json
 from nonebot import get_driver
 from pydantic import BaseModel, Extra
 
+
 class Config(BaseModel, extra=Extra.ignore):
     bot_id: str
     notice_id: int
+    music_api: str
+
 
 bot = Config.parse_obj(get_driver().config)
 valTable = dict()  # 存放一些其他数据
@@ -24,6 +27,14 @@ if os.path.exists("./store/blackList.json"):
     fs.close()
 else:
     valTable['blackList'] = list()
+
+if os.path.exists("./store/blackKeyList.json"):
+    fs = open("./store/blackKeyList.json", 'r')
+    valTable['blackKeyList'] = json.load(fs)
+    fs.close()
+else:
+    valTable['blackKeyList'] = list()
+
 
 if not os.path.exists('./store'):
     os.makedirs('./store')

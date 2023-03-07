@@ -9,6 +9,7 @@ from pydantic import BaseModel, Extra
 
 class Config(BaseModel, extra=Extra.ignore):
     bot_id: str
+    bot_name: str
 
 
 bot = Config.parse_obj(get_driver().config)
@@ -30,6 +31,7 @@ if os.path.exists("./store/conversations.json"):
     valTable = json.load(fs)
     fs.close()
 
+
 def getRandomChatBot():
     if (len(cbList) == 0):
         return -1
@@ -37,13 +39,16 @@ def getRandomChatBot():
     max = len(cbList)-1
     return random.randint(min, max)
 
+
 def getSpecificChatBot(index: int):
     if (index > len(cbList)-1):
         raise '1'
     return cbList[index]
 
+
 def getValue(key: str):
     return valTable.get(key)
+
 
 def setValue(key: str, val):
     valTable[key] = val
@@ -51,6 +56,7 @@ def setValue(key: str, val):
     fs.write(json.dumps(valTable))
     fs.close()
     return True
+
 
 def delValue(key: str):
     try:

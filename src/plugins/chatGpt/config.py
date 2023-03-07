@@ -18,11 +18,8 @@ cbList = list()
 
 if os.path.exists("./store/gptAct.json"):
     fs = open("./store/gptAct.json", 'r')
-    acts = json.load(fs)
+    cbList = json.load(fs)
     fs.close()
-    for v in acts:
-        cbList.append(Chatbot(config=v))
-        logger.info(f"[chatGPT] load:{v['email']}")
 
 
 valTable = dict()  # 存放一些其他数据
@@ -43,7 +40,7 @@ def getRandomChatBot():
 def getSpecificChatBot(index: int):
     if (index > len(cbList)-1):
         raise '1'
-    return cbList[index]
+    return Chatbot(config=cbList[index])
 
 
 def getValue(key: str):

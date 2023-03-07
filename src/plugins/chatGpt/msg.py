@@ -50,11 +50,11 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     else:
         index = config.getRandomChatBot()
 
-    if (config.getValue(f"{e.get_user_id}_flag") != None):
+    if (config.getValue(f"{e.user_id}_flag") != None):
         await bot.send(event=e, message="【上一条消息还没有回复，不要急哦！】", reply_message=True)
         return
     else:
-        config.setValue(f"{e.get_user_id}_flag", 1)
+        config.setValue(f"{e.user_id}_flag", 1)
         
     if (index == -1):
         await bot.send(event=e, message="【当前无可用机器人源，请稍后再试】", reply_message=True)
@@ -80,7 +80,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
         rtx_msg = '【调用时出现错误，请稍后重试或重置会话(发送/reset)】'
     else:
         pass
-    config.delValue(f"{e.get_user_id}_flag")
+    config.delValue(f"{e.user_id}_flag")
 
     rtx_msg = rtx_msg.replace("ChatGPT", config.bot.bot_name)
     rtx_msg = f"[CQ:reply,id={e.message_id}]"+rtx_msg

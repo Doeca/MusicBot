@@ -6,16 +6,18 @@ from . import config
 from typing import Union
 from nonebot import on_regex
 from nonebot.log import logger
+from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
 apiUrl = config.bot.music_api
 
-wyMatcher = on_regex('\[CQ:json.*?"appid":100495085')
-qqMatcher = on_regex('\[CQ:json.*?"appid":100497308')
+wyMatcher = on_regex('\[CQ:json.*?"appid":100495085', priority=1)
+qqMatcher = on_regex('\[CQ:json.*?"appid":100497308', priority=1)
 
 
 @qqMatcher.handle()
-async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
+async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
+    matcher.stop_propagation()
     if (config.getValue('orderSwitch') == 0):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
@@ -40,7 +42,8 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
 
 
 @wyMatcher.handle()
-async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
+async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
+    matcher.stop_propagation()
     if (config.getValue('orderSwitch') == 0):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
@@ -62,7 +65,6 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot):
 
 async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):
     # global orderList
-    blackList = config.getValue('blackList')
     orderPeople = config.getValue('orderPeople')
     orderList = config.getValue('orderList')
     maxList = config.getValue('maxList')
@@ -96,6 +98,6 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     fp.write(json.dumps(orderList))
     fp.close()
 
-    if(tempInfo['id'] >= config.getValue('maxList')):
-        await bot.set_group_card(group_id=config.bot.notice_id,user_id=config.bot.bot_id,card='点歌列表已满，努力播放中～')
+    if (tempInfo['id'] >= config.getValue('maxList')):
+        await bot.set_group_card(group_id=config.bot.notice_id, user_id=config.bot.bot_id, card='点歌列表已满，努力播放中～')
     await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)

@@ -74,6 +74,9 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
         rtx_msg = '【调用时出现错误，请稍后重试或重置会话(发送/reset)】'
     else:
         pass
+
+    rtx_msg = rtx_msg.replace("ChatGPT", config.bot.bot_name)
+    
     if (e.message_type == 'group'):
         rtx_msg = f"[CQ:reply,id={e.message_id}][CQ:at,qq={e.user_id}] "+rtx_msg
         await bot.send_msg(message_type='group', user_id=e.user_id, group_id=e.group_id, message=rtx_msg, auto_escape=False)

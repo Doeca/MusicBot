@@ -21,7 +21,7 @@ if os.path.exists("./store/gptAct.json"):
     fs.close()
     for v in acts:
         cbList.append(Chatbot(config=v))
-        logger.debug(f"[chatGPT] load:{v['email']}")
+        logger.info(f"[chatGPT] load:{v['email']}")
 
 
 valTable = dict()  # 存放一些其他数据

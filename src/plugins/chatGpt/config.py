@@ -28,6 +28,13 @@ if os.path.exists("./store/conversations.json"):
     valTable = json.load(fs)
     fs.close()
 
+def refreshAct():
+    global cbList
+    if os.path.exists("./store/gptAct.json"):
+        fs = open("./store/gptAct.json", 'r')
+        cbList = json.load(fs)
+        fs.close()
+
 
 def getRandomChatBot():
     if (len(cbList) == 0):

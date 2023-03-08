@@ -41,9 +41,9 @@ def del_conver(index, converID):
 
 
 @refreshMatcher.handle()
-async def change():
+async def change(bot: Bot):
     config.refreshAct()
-    refreshMatcher.finish(f"✌️已经刷新GPT账号列表，当前个数：{len(config.cbList)}")
+    bot.send(f"✌️已经刷新GPT账号列表，当前个数：{len(config.cbList)}")
 
 
 @resetMatcher.handle()

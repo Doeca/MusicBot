@@ -45,7 +45,7 @@ async def change(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], mat
     matcher.stop_propagation()
     config.refreshAct()
     len = config.getLen()
-    await bot.send(message=f"✌️已经刷新GPT账号列表，当前个数：{len}")
+    await bot.send(message=f"✌️已经刷新GPT账号列表，当前个数：{len}", event=e)
 
 
 @resetMatcher.handle()

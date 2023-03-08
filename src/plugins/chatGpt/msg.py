@@ -14,30 +14,12 @@ resetMatcher = on_command('reset', priority=1)
 msgMatcher = on_message(rule=to_me(), priority=5)
 
 
-@resetMatcher.handle()
-async def reset(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
-    matcher.stop_propagation()
-    rtx_msg = ""
-    try:
-        v = config.getValue(f"{e.user_id}")
-        index = v['index']
-        converID = v['converID']
-        config.getSpecificChatBot(index).delete_conversation(convo_id=converID)
-        config.delValue(f"{e.user_id}")
-    except:
-        rtx_msg = "重置会话失败，可能数据已不存在"
-    else:
-        rtx_msg = "重置会话成功"
-
-    await bot.send(event=e, message=rtx_msg, reply_message=True)
-
-
 @run_sync
 def get_Message(pd, index, msg):
     rtx_msg = ""
     converID = ''
     parentID = ''
- 
+
     if (pd == None):
         for data in config.getSpecificChatBot(index).ask(msg):
             rtx_msg = data["message"]
@@ -49,6 +31,30 @@ def get_Message(pd, index, msg):
             converID = data['conversation_id']
             parentID = data['parent_id']
     return [rtx_msg, converID, parentID]
+
+
+@run_sync
+def del_conver(index, converID):
+    config.getSpecificChatBot(index).delete_conversation(convo_id=converID)
+
+
+@resetMatcher.handle()
+async def reset(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
+    matcher.stop_propagation()
+    rtx_msg = ""
+    try:
+        v = config.getValue(f"{e.user_id}")
+        index = v['index']
+        converID = v['converID']
+        config.delValue(f"{e.user_id}")
+        config.delValue(f"{e.user_id}_flag")
+        await del_conver(index, converID)
+    except:
+        rtx_msg = "重置会话失败，可能数据已不存在"
+    else:
+        rtx_msg = "重置会话成功"
+
+    await bot.send(event=e, message=rtx_msg, reply_message=True)
 
 
 @msgMatcher.handle()
@@ -81,8 +87,6 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     rtx_msg = ""
     converID = ''
     parentID = ''
-
-    
 
     try:
         [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)

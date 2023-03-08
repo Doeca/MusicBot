@@ -36,6 +36,9 @@ def refreshAct():
         fs.close()
 
 
+def getLen():
+    return len(cbList)
+
 def getRandomChatBot():
     if (len(cbList) == 0):
         return -1

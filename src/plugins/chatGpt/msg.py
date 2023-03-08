@@ -1,13 +1,12 @@
 
 import re
-import requests
-import base64
 from . import config
 from typing import Union
 from nonebot import on_message, on_command
 from nonebot.log import logger
 from nonebot.rule import to_me
 from nonebot.matcher import Matcher
+from nonebot.utils import run_sync
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent
 
 
@@ -33,6 +32,25 @@ async def reset(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matc
     await bot.send(event=e, message=rtx_msg, reply_message=True)
 
 
+@run_sync
+def get_Message(pd, index, msg):
+    rtx_msg = ""
+    converID = ''
+    parentID = ''
+ 
+    if (pd == None):
+        for data in config.getSpecificChatBot(index).ask(msg):
+            rtx_msg = data["message"]
+            converID = data['conversation_id']
+            parentID = data['parent_id']
+    else:
+        for data in config.getSpecificChatBot(index).ask(msg, conversation_id=pd['converID'], parent_id=pd['parentID']):
+            rtx_msg = data["message"]
+            converID = data['conversation_id']
+            parentID = data['parent_id']
+    return [rtx_msg, converID, parentID]
+
+
 @msgMatcher.handle()
 async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     msg = str(e.get_message())
@@ -55,7 +73,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
         return
     else:
         config.setValue(f"{e.user_id}_flag", 1)
-        
+
     if (index == -1):
         await bot.send(event=e, message="【当前无可用机器人源，请稍后再试】", reply_message=True)
         return
@@ -63,17 +81,11 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     rtx_msg = ""
     converID = ''
     parentID = ''
+
+    
+
     try:
-        if (pd == None):
-            for data in config.getSpecificChatBot(index).ask(msg):
-                rtx_msg = data["message"]
-                converID = data['conversation_id']
-                parentID = data['parent_id']
-        else:
-            for data in config.getSpecificChatBot(index).ask(msg, conversation_id=pd['converID'], parent_id=pd['parentID']):
-                rtx_msg = data["message"]
-                converID = data['conversation_id']
-                parentID = data['parent_id']
+        [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
         pd = dict({"index": index, "converID": converID, "parentID": parentID})
         config.setValue(f"{e.user_id}", pd)
     except:
@@ -85,7 +97,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     rtx_msg = rtx_msg.replace("ChatGPT", config.bot.bot_name)
     rtx_msg = f"[CQ:reply,id={e.message_id}]"+rtx_msg
     if (e.message_type == 'group'):
-        
+
         await bot.send_msg(message_type='group', user_id=e.user_id, group_id=e.group_id, message=rtx_msg, auto_escape=False)
     else:
         await bot.send_msg(user_id=e.user_id, message=rtx_msg, auto_escape=False)

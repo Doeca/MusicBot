@@ -23,12 +23,12 @@ def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
     parentID = ''
     i = 0
     if (pd == None):
-        for data in config.getSpecificChatBot(index).ask(msg, timeout=360):
+        for data in config.getSpecificChatBot(index).ask(msg, timeout=3600):
             i = i + 1
             if i >= 500:
                 bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
                 i = 0
-            print(data)
+            # print(data)
             rtx_msg = data["message"]
             converID = data['conversation_id']
             parentID = data['parent_id']
@@ -38,7 +38,7 @@ def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
             if i >= 500:
                 bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
                 i = 0
-            print(data)
+            # print(data)
             rtx_msg = data["message"]
             converID = data['conversation_id']
             parentID = data['parent_id']
@@ -114,17 +114,15 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     parentID = ''
 
     logger.info(f"ChatGPT账号index:{index}")
-    # try:
-    #     [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
-    #     pd = dict({"index": index, "converID": converID, "parentID": parentID})
-    #     config.setValue(f"{e.user_id}", pd)
-    # except:
-    #     rtx_msg = '🥶调用时出现错误，请稍后重试或 重置会话(发送 /reset)'
-    # else:
-    #     pass
-    [rtx_msg, converID, parentID] = await get_Message(pd, index, msg, bot, e)
-    pd = dict({"index": index, "converID": converID, "parentID": parentID})
-    config.setValue(f"{e.user_id}", pd)
+    try:
+        [rtx_msg, converID, parentID] = await get_Message(pd, index, msg, bot, e)
+        pd = dict({"index": index, "converID": converID, "parentID": parentID})
+        config.setValue(f"{e.user_id}", pd)
+    except:
+        rtx_msg = '🥶调用时出现错误，请稍后重试或 重置会话(发送 /reset)'
+    else:
+        pass
+
     config.delValue(f"{e.user_id}_flag")
 
     rtx_msg = rtx_msg.replace("ChatGPT", config.bot.bot_name)

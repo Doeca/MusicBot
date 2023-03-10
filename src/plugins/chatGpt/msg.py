@@ -113,14 +113,17 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     parentID = ''
 
     logger.info(f"ChatGPT账号index:{index}")
-    try:
-        [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
-        pd = dict({"index": index, "converID": converID, "parentID": parentID})
-        config.setValue(f"{e.user_id}", pd)
-    except:
-        rtx_msg = '🥶调用时出现错误，请稍后重试或 重置会话(发送 /reset)'
-    else:
-        pass
+    # try:
+    #     [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
+    #     pd = dict({"index": index, "converID": converID, "parentID": parentID})
+    #     config.setValue(f"{e.user_id}", pd)
+    # except:
+    #     rtx_msg = '🥶调用时出现错误，请稍后重试或 重置会话(发送 /reset)'
+    # else:
+    #     pass
+    [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
+    pd = dict({"index": index, "converID": converID, "parentID": parentID})
+    config.setValue(f"{e.user_id}", pd)
     config.delValue(f"{e.user_id}_flag")
 
     rtx_msg = rtx_msg.replace("ChatGPT", config.bot.bot_name)

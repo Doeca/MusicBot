@@ -29,6 +29,7 @@ async def run_stop_order_1():
     global orderPeople, orderList, opertaionList, file_log, currentID
     global orderSwitch
 
+    config.setValue('prioritified', 0)
     config.setValue('orderSwitch', 0)
     config.setValue('fileLog', '')
     config.setValue('currentID', 0)

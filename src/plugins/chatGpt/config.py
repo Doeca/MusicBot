@@ -28,6 +28,7 @@ if os.path.exists("./store/conversations.json"):
     valTable = json.load(fs)
     fs.close()
 
+
 def refreshAct():
     global cbList
     if os.path.exists("./store/gptAct.json"):
@@ -38,6 +39,7 @@ def refreshAct():
 
 def getLen():
     return len(cbList)
+
 
 def getRandomChatBot():
     if (len(cbList) == 0):
@@ -76,9 +78,11 @@ def delValue(key: str):
     else:
         return True
 
+
 def getSwitch():
     return switch
 
-def setSwitch(i:int):
+def setSwitch(i: int):
+    global switch
     switch = i
     return True

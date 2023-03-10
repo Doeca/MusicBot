@@ -37,6 +37,7 @@ async def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
             if i >= 500:
                 await bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
                 i = 0
+            print(data)
             rtx_msg = data["message"]
             converID = data['conversation_id']
             parentID = data['parent_id']

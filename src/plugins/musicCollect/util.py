@@ -91,3 +91,38 @@ def isBlack(name: str):
         if name.find(v) != -1:
             return True
     return False
+
+
+def getSongList(ex=None):
+    songList = list()
+    if (ex == None):
+        orderList = config.getValue('orderList')
+    else:
+        orderList = ex
+    for v in orderList:
+        songList.append(v['name'])
+    return songList
+
+
+def getOrder(qq: int):
+    songList = list()
+    orderList = config.getValue('orderList')
+    for v in orderList:
+        if (v['uin'] == qq):
+            songList.append(v)
+    return songList
+
+
+def changeOrder(fir: int, sec: int):
+    orderList = config.getValue('orderList')[:]
+    rawList: list = config.getValue('orderList')
+    sec_data = orderList[sec-1]
+
+    rawList.pop(sec-1)
+    rawList.insert(fir, sec_data)
+    
+    id = 1
+    for v in rawList:
+        v['id'] = id
+        id = id + 1
+    return True

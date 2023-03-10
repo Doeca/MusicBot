@@ -12,6 +12,7 @@ class Config(BaseModel, extra=Extra.ignore):
 
 bot = Config.parse_obj(get_driver().config)
 valTable = dict()  # 存放一些其他数据
+valTable['prioritified'] = 0
 valTable['orderSwitch'] = 0
 valTable['maxList'] = 30
 valTable['fileLog'] = ''

@@ -31,6 +31,8 @@ keyMatcher = on_command("addkey", permission=(
 nextMatcher = on_command("next", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
 blackMatcher = on_fullmatch("黑名单列表", rule=group_checker)
+setPriorMatcher = on_command(
+    "setPrior", aliases={"提前", "生日快乐"}, rule=group_checker)
 
 
 @blackMatcher.handle()
@@ -134,3 +136,33 @@ async def banID(arg: str = ArgStr('arg')):
     fs.close()
 
     await banMatcher.finish(f"关键词'{name}'已加入黑名单")
+
+
+@setPriorMatcher.handle()
+async def setPriorhandle(e: Event, bot: Bot):
+    if (config.getValue('orderSwitch') == 0):
+        await bot.send(e, "当前不在点歌时间段内，不能使用该功能哦🥺", at_sender=True, reply_message=True)
+        return
+    if (config.getValue('prioritified') == 1):
+        await bot.send(e, f"很抱歉，该时段已经有人使用过提前播放功能了，不能再次使用😥", at_sender=True, reply_message=True)
+        return
+    qq = int(e.get_user_id())
+    res = util.getOrder(qq)
+    nameList = util.getSongList(res)
+
+    if ('生日快乐' not in nameList):
+        await bot.send(e, f"很抱歉，你点的歌不能提前播放，只有生日快乐歌才能提前播放哦🤧", at_sender=True, reply_message=True)
+        return
+    id = 0
+    if (nameList[0].find("生日快乐") != -1):
+        id = res[0]['id']
+    else:
+        id = res[1]['id']
+    if (util.currentPlay() >= id):
+        await bot.send(e, f"很抱歉，此歌已经播放过了，不能重复播放😿", at_sender=True, reply_message=True)
+        return
+    if (util.currentPlay()+1 == id):
+        await bot.send(e, f"很抱歉，此歌本来就在下一首，无需提前播放😿", at_sender=True, reply_message=True)
+        return
+    util.changeOrder(util.currentPlay(), id)
+    await bot.send(e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)

@@ -78,6 +78,10 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
         await bot.send(e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",
                        at_sender=True, reply_message=True)
         return
+    if name in util.getSongList():
+        await bot.send(e, f"很抱歉，《{name}》已经被别人点过了，换首别的歌吧😵",
+                       at_sender=True, reply_message=True)
+        return
     orderPeople[e.user_id] = (0 if orderPeople.get(
         e.user_id) == None else orderPeople[e.user_id])
     orderPeople[e.user_id] = orderPeople[e.user_id] + 1

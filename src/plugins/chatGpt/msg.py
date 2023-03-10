@@ -10,25 +10,33 @@ from nonebot.utils import run_sync
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent
 
-
+switchMatcher = on_command('switch', priority=1, permission=SUPERUSER)
 resetMatcher = on_command('reset', priority=1)
 refreshMatcher = on_command("refresh", permission=SUPERUSER, priority=1)
 msgMatcher = on_message(rule=to_me(), priority=5)
 
-
 @run_sync
-def get_Message(pd, index, msg):
+async def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
     rtx_msg = ""
     converID = ''
     parentID = ''
-
+    i = 0
     if (pd == None):
-        for data in config.getSpecificChatBot(index).ask(msg):
+        for data in config.getSpecificChatBot(index).ask(msg, timeout=360):
+            i = i + 1
+            if i >= 500:
+                await bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
+                i = 0
+            print(data)
             rtx_msg = data["message"]
             converID = data['conversation_id']
             parentID = data['parent_id']
     else:
-        for data in config.getSpecificChatBot(index).ask(msg, conversation_id=pd['converID'], parent_id=pd['parentID']):
+        for data in config.getSpecificChatBot(index).ask(msg, conversation_id=pd['converID'], parent_id=pd['parentID'], timeout=3600):
+            i = i + 1
+            if i >= 500:
+                await bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
+                i = 0
             rtx_msg = data["message"]
             converID = data['conversation_id']
             parentID = data['parent_id']
@@ -70,8 +78,12 @@ async def reset(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matc
 
 @ msgMatcher.handle()
 async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
+    if (config.getSwitch() == 0):
+        if (e.message_type == 'group'):
+            await bot.send(event=e, message="🈲️此功能已被关闭", reply_message=True)
+        return
+
     msg = str(e.get_message())
-    print('raw msg:', msg)
     match = re.search(r'\[CQ.*file=([^,]*).*\]', msg, re.I | re.M)
     while (match != None):
         tt = await bot.get_image(file=match.group(1))
@@ -116,3 +128,14 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
         await bot.send_msg(message_type='group', user_id=e.user_id, group_id=e.group_id, message=rtx_msg, auto_escape=False)
     else:
         await bot.send_msg(user_id=e.user_id, message=rtx_msg, auto_escape=False)
+
+
+@switchMatcher.handle()
+async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
+    matcher.stop_propagation()
+    if (config.getSwitch() == 1):
+        config.setSwitch(0)
+        await bot.send(message=f"🤐已关闭GPT功能", event=e)
+    else:
+        config.setSwitch(1)
+        await bot.send(message=f"😆已开启GPT功能", event=e)

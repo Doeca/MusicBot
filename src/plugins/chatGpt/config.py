@@ -13,7 +13,7 @@ class Config(BaseModel, extra=Extra.ignore):
 
 
 bot = Config.parse_obj(get_driver().config)
-
+switch = 1
 cbList = list()
 
 if os.path.exists("./store/gptAct.json"):
@@ -75,3 +75,10 @@ def delValue(key: str):
         return False
     else:
         return True
+
+def getSwitch():
+    return switch
+
+def setSwitch(i:int):
+    switch = i
+    return True

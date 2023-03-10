@@ -15,6 +15,7 @@ resetMatcher = on_command('reset', priority=1)
 refreshMatcher = on_command("refresh", permission=SUPERUSER, priority=1)
 msgMatcher = on_message(rule=to_me(), priority=5)
 
+
 @run_sync
 def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
     rtx_msg = ""
@@ -121,7 +122,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     #     rtx_msg = '🥶调用时出现错误，请稍后重试或 重置会话(发送 /reset)'
     # else:
     #     pass
-    [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
+    [rtx_msg, converID, parentID] = await get_Message(pd, index, msg, bot, e)
     pd = dict({"index": index, "converID": converID, "parentID": parentID})
     config.setValue(f"{e.user_id}", pd)
     config.delValue(f"{e.user_id}_flag")

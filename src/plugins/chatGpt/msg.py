@@ -112,6 +112,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     converID = ''
     parentID = ''
 
+    logger.info(f"ChatGPT账号index:{index}")
     try:
         [rtx_msg, converID, parentID] = await get_Message(pd, index, msg)
         pd = dict({"index": index, "converID": converID, "parentID": parentID})

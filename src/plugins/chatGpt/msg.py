@@ -16,7 +16,7 @@ refreshMatcher = on_command("refresh", permission=SUPERUSER, priority=1)
 msgMatcher = on_message(rule=to_me(), priority=5)
 
 @run_sync
-async def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
+def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
     rtx_msg = ""
     converID = ''
     parentID = ''
@@ -25,7 +25,7 @@ async def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
         for data in config.getSpecificChatBot(index).ask(msg, timeout=360):
             i = i + 1
             if i >= 500:
-                await bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
+                bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
                 i = 0
             print(data)
             rtx_msg = data["message"]
@@ -35,7 +35,7 @@ async def get_Message(pd: str, index: str, msg: str, bot: Bot, e):
         for data in config.getSpecificChatBot(index).ask(msg, conversation_id=pd['converID'], parent_id=pd['parentID'], timeout=3600):
             i = i + 1
             if i >= 500:
-                await bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
+                bot.send(event=e, message="回复将很快生成，请再耐心等待一会⌛️")
                 i = 0
             print(data)
             rtx_msg = data["message"]

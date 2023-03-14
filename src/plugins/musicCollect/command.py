@@ -165,4 +165,5 @@ async def setPriorhandle(e: Event, bot: Bot):
         await bot.send(e, f"很抱歉，此歌本来就在下一首，无需提前播放😿", at_sender=True, reply_message=True)
         return
     util.changeOrder(util.currentPlay(), id)
+    config.setValue('orderSwitch', 1)
     await bot.send(e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)

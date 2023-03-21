@@ -69,7 +69,8 @@ async def reset(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matc
         index = v['index']
         converID = v['converID']
         config.delValue(f"{e.user_id}")
-        await del_conver(index, converID)
+        if (index <= len(config.cbList)-1):
+            await del_conver(index, converID)
     except:
         rtx_msg = "❌重置会话失败，可能数据已不存在"
     else:

@@ -38,6 +38,6 @@ async def run_stop_order_1():
     config.getValue('opertaionList').clear()
 
     bot: Bot = get_bot(config.bot.bot_id)
-    await bot.set_group_card(group_id=config.bot.notice_id, user_id=config.bot.bot_id, card='重庆大学点歌姬 欢迎扩列&投稿')
-    await bot.send_group_msg(group_id=config.bot.notice_id,
-                             message="🦭点歌已经结束了哦，大家下次再来吧～")
+    for gid in config.bot.notice_id:
+        await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card='重庆大学点歌姬 欢迎扩列&投稿')
+        await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")

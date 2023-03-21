@@ -16,7 +16,7 @@ from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent]) -> bool:
     if e.message_type == 'private':
         return True
-    return e.group_id == config.bot.notice_id
+    return e.group_id in config.bot.notice_id
 
 
 listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=group_checker)

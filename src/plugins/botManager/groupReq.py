@@ -9,7 +9,7 @@ girq = on_request()
 
 @frq.handle()
 async def approve(bot: Bot, e: GroupRequestEvent):
-    if e.sub_type == 'add' and e.group_id == config.bot.notice_id:
+    if e.sub_type == 'add' and e.group_id in config.bot.notice_id:
         await e.approve(bot)
 
 @girq.handle()

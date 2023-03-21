@@ -103,5 +103,6 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     fp.close()
 
     if (tempInfo['id'] >= config.getValue('maxList')):
-        await bot.set_group_card(group_id=config.bot.notice_id, user_id=config.bot.bot_id, card='点歌列表已满，努力播放中～')
+        for gid in config.bot.notice_id:
+            await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card='点歌列表已满，努力播放中～')
     await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)

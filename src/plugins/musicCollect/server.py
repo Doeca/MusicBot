@@ -32,8 +32,9 @@ async def play_id(id: int = 1):
         if (v['id'] == id):
             v['played'] = 1
             bot = get_bot(config.bot.bot_id)
-            await bot.send_group_msg(group_id=config.bot.notice_id,
-                                     message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
+            for gid in config.bot.notice_id:
+                await bot.send_group_msg(group_id=gid,
+                                         message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
             return v
     return {"res": '-1'}
 

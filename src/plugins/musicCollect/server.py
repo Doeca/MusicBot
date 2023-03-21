@@ -52,3 +52,9 @@ async def get_operations():
     bot: Bot = get_bot(config.bot.bot_id)
     await bot.send_private_msg(user_id=1124468334, message="网易云登陆已掉线，请重新扫码登陆")
     return {"res": 1}
+
+@app.get("/notifyLogin")
+async def get_operations():
+    bot: Bot = get_bot(config.bot.bot_id)
+    await bot.send_private_msg(user_id=1124468334, message="网易云登陆已恢复")
+    return {"res": 1}

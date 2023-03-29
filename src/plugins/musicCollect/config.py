@@ -8,6 +8,7 @@ class Config(BaseModel, extra=Extra.ignore):
     bot_id: str
     notice_id: list
     music_api: str
+    bot_api: str
 
 
 bot = Config.parse_obj(get_driver().config)
@@ -20,17 +21,17 @@ valTable['currentID'] = 0
 valTable['orderList'] = list()  # 歌曲信息列表
 valTable['orderPeople'] = dict()  # 存放用户点歌数量
 valTable['opertaionList'] = list()  # 存放传递给前端的操作信息
+valTable['debug'] = 0
 
-
-if os.path.exists("./store/blackList.json"):
-    fs = open("./store/blackList.json", 'r')
+if os.path.exists("./settings/blackList.json"):
+    fs = open("./settings/blackList.json", 'r')
     valTable['blackList'] = json.load(fs)
     fs.close()
 else:
     valTable['blackList'] = list()
 
-if os.path.exists("./store/blackKeyList.json"):
-    fs = open("./store/blackKeyList.json", 'r')
+if os.path.exists("./settings/blackKeyList.json"):
+    fs = open("./settings/blackKeyList.json", 'r')
     valTable['blackKeyList'] = json.load(fs)
     fs.close()
 else:
@@ -39,6 +40,8 @@ else:
 
 if not os.path.exists('./store'):
     os.makedirs('./store')
+if not os.path.exists('./settings'):
+    os.makedirs('./settings')
 
 
 def getValue(key: str):

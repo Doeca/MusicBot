@@ -6,17 +6,18 @@ def unescape(str: str):
 
 
 def currentPlay():
-    orderList = config.getValue('orderList')
-    id = 0
-    tmpID = 0
-    for v in orderList:
-        if (v['played'] == 1):
-            tmpID = v['id']
-        else:
-            id = tmpID
-            break
-    id = tmpID
-    return id
+    # orderList = config.getValue('orderList')
+    # id = 0
+    # tmpID = 0
+    # for v in orderList:
+    #     if (v['played'] == 1):
+    #         tmpID = v['id']
+    #     else:
+    #         id = tmpID
+    #         break
+    # id = tmpID
+    # return id
+    return config.getValue('currentID')
 
 
 def generateList():
@@ -94,6 +95,9 @@ def isBlack(name: str):
 
 
 def getSongList(ex=None):
+    """
+    获取歌名列表，若传入ex则返回ex的歌名列表（配合获取指定人歌单）
+    """
     songList = list()
     if (ex == None):
         orderList = config.getValue('orderList')
@@ -105,6 +109,9 @@ def getSongList(ex=None):
 
 
 def getOrder(qq: int):
+    """
+    根据QQ获取其所点的所有歌曲
+    """
     songList = list()
     orderList = config.getValue('orderList')
     for v in orderList:

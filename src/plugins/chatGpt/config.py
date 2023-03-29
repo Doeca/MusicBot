@@ -16,23 +16,23 @@ bot = Config.parse_obj(get_driver().config)
 switch = 1
 cbList = list()
 
-if os.path.exists("./store/gptAct.json"):
-    fs = open("./store/gptAct.json", 'r')
+if os.path.exists("./settings/gptAct.json"):
+    fs = open("./settings/gptAct.json", 'r')
     cbList = json.load(fs)
     fs.close()
 
 
 valTable = dict()  # 存放一些其他数据
-if os.path.exists("./store/conversations.json"):
-    fs = open("./store/conversations.json", 'r')
+if os.path.exists("./settings/conversations.json"):
+    fs = open("./settings/conversations.json", 'r')
     valTable = json.load(fs)
     fs.close()
 
 
 def refreshAct():
     global cbList
-    if os.path.exists("./store/gptAct.json"):
-        fs = open("./store/gptAct.json", 'r')
+    if os.path.exists("./settings/gptAct.json"):
+        fs = open("./settings/gptAct.json", 'r')
         cbList = json.load(fs)
         fs.close()
 
@@ -61,7 +61,7 @@ def getValue(key: str):
 
 def setValue(key: str, val):
     valTable[key] = val
-    fs = open("./store/conversations.json", 'w')
+    fs = open("./settings/conversations.json", 'w')
     fs.write(json.dumps(valTable))
     fs.close()
     return True
@@ -70,7 +70,7 @@ def setValue(key: str, val):
 def delValue(key: str):
     try:
         valTable.pop(key)
-        fs = open("./store/conversations.json", 'w')
+        fs = open("./settings/conversations.json", 'w')
         fs.write(json.dumps(valTable))
         fs.close()
     except KeyError:

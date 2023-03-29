@@ -27,9 +27,6 @@ async def run_start_order():
 
 @scheduler.scheduled_job("cron", id="stop", hour="13,19", minute=30)
 async def run_stop_order_1():
-    global orderPeople, orderList, opertaionList, file_log, currentID
-    global orderSwitch
-
     config.setValue('prioritified', 0)
     config.setValue('orderSwitch', 0)
     config.setValue('fileLog', '')

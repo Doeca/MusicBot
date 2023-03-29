@@ -80,7 +80,6 @@ async def banID(arg: str = ArgStr('arg')):
 
     line = arg.strip()
     name = ''
-
     if line == '':
         await banMatcher.finish(f"操作已取消")
     elif line.isdigit():
@@ -90,6 +89,12 @@ async def banID(arg: str = ArgStr('arg')):
         name = orderList[id-1]['name']
         if id == util.currentPlay():
             util.addOperation('next')
+        rawList: list = config.getValue('orderList')
+        rawList.pop(id - 1)
+        id = 1
+        for v in rawList:
+            v['id'] = id
+            id = id + 1
     else:
         name = line
 
@@ -97,7 +102,7 @@ async def banID(arg: str = ArgStr('arg')):
         await banMatcher.reject(f"歌曲《{name}》已存在于黑名单中，无需重复拉黑")
     blackList.append(name)
 
-    fs = open("./store/blackList.json", 'w')
+    fs = open("./settings/blackList.json", 'w')
     blackListStr = json.dumps(blackList)
     fs.write(blackListStr)
     fs.close()
@@ -130,7 +135,7 @@ async def banID(arg: str = ArgStr('arg')):
         await keyMatcher.reject(f"关键词'{name}'已存在于黑名单中，无需重复加入")
     blackKeyList.append(name)
 
-    fs = open("./store/blackKeyList.json", 'w')
+    fs = open("./settings/blackKeyList.json", 'w')
     blackKeyListStr = json.dumps(blackKeyList)
     fs.write(blackKeyListStr)
     fs.close()

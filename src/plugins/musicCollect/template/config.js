@@ -12,6 +12,9 @@ docute.init({
         player()
     ]
 });
+function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 function aplayer1() {
     window.ap1 = new APlayer({
@@ -34,11 +37,13 @@ function player() {
     return function (context) {
         context.event.on('landing:updated', function () {
             aplayer1();
-            setInterval(async (handler) => {
-                await operatePlayer();
-                await loadPlayer();
-                console.log('fetch new operations');
-            }, delay);
+            setTimeout(async () => {
+                while (true) {
+                    await operatePlayer();
+                    await loadPlayer();
+                    await sleep(delay);
+                }
+            }, delay)
         });
     };
 }

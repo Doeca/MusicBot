@@ -57,6 +57,7 @@ async function loadPlayer(skipCheck) {
     if (id != currentID) {
         currentID = id
         await skipNext();
+        console.log(`skipNext了,playStatus:${playStatus}`)
     }
 
 }

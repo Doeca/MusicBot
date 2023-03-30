@@ -90,6 +90,7 @@ async function skipNext() {
 async function operatePlayer() {
     let res = await fetch(`${apiUrl}/getOperations`, { mode: "cors" });
     let arr = await res.json();
+    console.log(arr);
     if (arr == null) return;
     if (arr.length != 0) {
         for (let i = 0; i < arr.length(); i++) {

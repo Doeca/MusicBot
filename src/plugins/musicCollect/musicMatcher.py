@@ -50,9 +50,23 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
-    matchObj = re.search(r'id=([0-9]{1,13}).*', msg, re.M | re.I)
-    id = matchObj.group(1)
-    logger.debug(f"ID: {id}")
+    id = '0'
+    try:
+        matchObj = re.search(r'http:\/\/music\.163\.com\/song\/([0-9]{1,13})\?', msg, re.M | re.I)
+        if(matchObj != None):
+            id = matchObj.group(1)
+        else:
+            matchObj = re.search(r'id=([0-9]{1,13})&amp;user', msg, re.M | re.I)
+            id = matchObj.group(1)
+    except:
+        if (config.getValue('debug') == 1):
+            logger.debug(resp.text)
+            await bot.send_private_msg(user_id=1124468334, message=f"正则匹配失败，相关日志：\nraw msg:{msg}",auto_escape=True)
+        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        return
+    else:
+        pass
+
     resp = requests.get(f"{apiUrl}/wy/detail?id={id}")
     if resp.status_code != 200:
         if (config.getValue('debug') == 1):
@@ -64,7 +78,6 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
 
     await addToList(e, bot, songInfo['name'], songInfo['author'], urls)
-    # 访问musicAPI，获取songURL等信息，若获取失败则提示点歌失败
 
 
 async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):

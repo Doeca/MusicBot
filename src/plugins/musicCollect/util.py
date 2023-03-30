@@ -40,7 +40,7 @@ def generateList():
         return res
 
 
-def addOperation(type: str, para: str = '0'):
+def addOperation(type: str, para = 0):
     opertaionList = config.getValue('opertaionList')
     temp = dict()
     temp['type'] = type

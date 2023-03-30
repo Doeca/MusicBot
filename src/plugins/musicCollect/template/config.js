@@ -60,7 +60,7 @@ function aplayer1() {
 
     window.ap1.on('ended', () => {
         playStatus = 0;
-        loadPlayer();
+        //loadPlayer();
     })
 }
 
@@ -99,9 +99,10 @@ function operatePlayer() {
             if (arr == null) return;
             if (arr.length != 0) {
                 arr.forEach((v, i) => {
-                    if (v.type == 'next') {
+                    if (v.type == 'next')
                         loadPlayer(true);
-                    }
+                    if (v.type == 'volume')
+                        window.ap1.volume(v.para, true);
                 })
             }
         })

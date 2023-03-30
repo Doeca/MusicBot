@@ -25,12 +25,12 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     matchObj = re.search(r'"jumpUrl":"(.*?)"&#44;"p', msg, re.M | re.I)
     detailUrl = matchObj.group(1)
     detailUrl = util.unescape(detailUrl)
-    resp = requests.get(detailUrl)
+    resp = await util.httpGet(detailUrl)
     matchObj = re.search(r'"mid":"(.*?)"', resp.text, re.M | re.I)
     mid = matchObj.group(1)
     logger.debug(f"MID: {mid}")
 
-    resp = requests.get(f"{apiUrl}/qq/detail?id={mid}")
+    resp = await util.httpGet(f"{apiUrl}/qq/detail?id={mid}")
     if resp.status_code != 200:
         if (config.getValue('debug') == 1):
             logger.debug(resp.text)
@@ -67,7 +67,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     else:
         pass
 
-    resp = requests.get(f"{apiUrl}/wy/detail?id={id}")
+    resp = await util.httpGet(f"{apiUrl}/wy/detail?id={id}")
     if resp.status_code != 200:
         if (config.getValue('debug') == 1):
             logger.debug(resp.text)

@@ -1,5 +1,11 @@
+import requests
 from . import config
+from nonebot.utils import run_sync
 
+
+@run_sync
+def httpGet(url):
+    return requests.get(url)
 
 def unescape(str: str):
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")

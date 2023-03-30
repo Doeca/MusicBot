@@ -2,7 +2,7 @@ let apiUrl = '{{ apiUrl }}';
 let delay = 1000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
-
+let tt = 0;
 docute.init({
     landing: 'landing.html',
     title: '小老虎食堂音乐播放器',
@@ -44,6 +44,7 @@ function player() {
 }
 
 async function loadPlayer(skipCheck) {
+    console.log(`第${tt++}次被调用,skipCheck:${skipCheck},currentID:${currentID}`)
     if (!skipCheck) {
         if (playStatus == 1)
             return;

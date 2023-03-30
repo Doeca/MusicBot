@@ -32,7 +32,9 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     resp = requests.get(f"{apiUrl}/qq/detail?id={mid}")
     if resp.status_code != 200:
-        logger.debug(resp.text)
+        if (config.getValue('debug') == 1):
+            logger.debug(resp.text)
+            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nmid:{mid}\nraw msg:{msg}",auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()
@@ -53,9 +55,9 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     logger.debug(f"ID: {id}")
     resp = requests.get(f"{apiUrl}/wy/detail?id={id}")
     if resp.status_code != 200:
-        logger.debug(resp.text)
-        if (config.getValue('debug') != None):
-            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}")
+        if (config.getValue('debug') == 1):
+            logger.debug(resp.text)
+            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nid:{id}\nraw msg:{msg}",auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()

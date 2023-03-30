@@ -18,7 +18,8 @@ async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent]) -> boo
         return True
     return e.group_id in config.bot.notice_id
 
-
+debugMatcher = on_command("debug", permission=(
+    SUPERUSER), rule=group_checker)
 listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=group_checker)
 playingMatcher = on_regex(
     '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=group_checker)
@@ -30,6 +31,7 @@ keyMatcher = on_command("addkey", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
 nextMatcher = on_command("next", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
+
 blackMatcher = on_fullmatch("黑名单列表", rule=group_checker)
 setPriorMatcher = on_command(
     "setPrior", aliases={"提前", "生日快乐"}, rule=group_checker)
@@ -172,3 +174,14 @@ async def setPriorhandle(e: Event, bot: Bot):
     util.changeOrder(util.currentPlay(), id)
     config.setValue('orderSwitch', 1)
     await bot.send(e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)
+
+
+@debugMatcher.handle()
+async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
+    matcher.stop_propagation()
+    if (config.getValue('debug') == 1):
+        config.setValue('debug', 0)
+        await bot.send(message=f"🤐Turn off debug mode", event=e)
+    else:
+        config.setValue('debug', 1)
+        await bot.send(message=f"😆Switch to debug mode", event=e)

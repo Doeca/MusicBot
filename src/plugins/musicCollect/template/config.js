@@ -44,7 +44,7 @@ function player() {
 }
 
 async function loadPlayer(skipCheck) {
-    console.log(`第${tt++}次被调用,skipCheck:${skipCheck},currentID:${currentID}`)
+    console.log(`第${tt++}次被调用,skipCheck:${skipCheck},currentID:${currentID},playStatus:${playStatus}`)
     if (!skipCheck) {
         if (playStatus == 1)
             return;

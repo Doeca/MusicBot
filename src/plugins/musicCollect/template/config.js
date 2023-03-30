@@ -92,11 +92,11 @@ async function operatePlayer() {
     let arr = await res.json();
     if (arr == null) return;
     if (arr.length != 0) {
-        await arr.forEach(async (v, i) => {
-            if (v.type == 'next')
+        for (let i = 0; i < arr.length(); i++) {
+            if (arr[i].type == 'next')
                 await loadPlayer(true);
-            if (v.type == 'volume')
-                window.ap1.volume(v.para, true);
-        })
+            if (arr[i].type == 'volume')
+                window.ap1.volume(arr[i].para, true);
+        }
     }
 }

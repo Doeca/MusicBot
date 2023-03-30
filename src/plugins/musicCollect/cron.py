@@ -8,7 +8,7 @@ from nonebot import require
 require("nonebot_plugin_apscheduler")
 
 
-@scheduler.scheduled_job("cron", id="start", hour="11,17", minute=30)
+
 async def run_start_order():
     if (config.getValue('orderSwitch') == 1):
         return
@@ -24,9 +24,7 @@ async def run_start_order():
         await bot.send_group_msg(group_id=gid,
                                  message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
 
-
-@scheduler.scheduled_job("cron", id="stop", hour="13,19", minute=30)
-async def run_stop_order_1():
+async def run_stop_order():
     config.setValue('prioritified', 0)
     config.setValue('orderSwitch', 0)
     config.setValue('fileLog', '')
@@ -37,5 +35,18 @@ async def run_stop_order_1():
 
     bot: Bot = get_bot(config.bot.bot_id)
     for gid in config.bot.notice_id:
-        await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card='重庆大学点歌姬 欢迎扩列&投稿')
+        await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card=config.bot.card_common)
         await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
+
+@scheduler.scheduled_job("cron", id="startAM", hour=config.bot.set_time[0], minute=config.bot.set_time[1])
+async def stMissionAm():
+    await run_start_order()
+@scheduler.scheduled_job("cron", id="startPM", hour=config.bot.set_time[2], minute=config.bot.set_time[3])
+async def stMissionPm():
+    await run_start_order()
+@scheduler.scheduled_job("cron", id="stopAM", hour=config.bot.set_time[4], minute=config.bot.set_time[5])
+async def stopMissionAm():
+    await run_stop_order()
+@scheduler.scheduled_job("cron", id="stopPM", hour=config.bot.set_time[6], minute=config.bot.set_time[7])
+async def stopMissionPm():
+    await run_stop_order()

@@ -9,6 +9,8 @@ class Config(BaseModel, extra=Extra.ignore):
     notice_id: list
     music_api: str
     bot_api: str
+    card_common: str
+    set_time: list
 
 
 bot = Config.parse_obj(get_driver().config)

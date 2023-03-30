@@ -49,7 +49,7 @@ function player() {
 }
 
 async function loadPlayer(skipCheck) {
-    console.log(`第${tt++}次被调用,skipCheck:${skipCheck},currentID:${currentID},playStatus:${playStatus}`)
+    //console.log(`第${tt++}次被调用,skipCheck:${skipCheck},currentID:${currentID},playStatus:${playStatus}`)
     if (!skipCheck) {
         if (playStatus == 1)
             return;
@@ -62,7 +62,7 @@ async function loadPlayer(skipCheck) {
     if (id != currentID) {
         currentID = id
         await skipNext();
-        console.log(`skipNext了,playStatus:${playStatus}`)
+        //console.log(`skipNext了,playStatus:${playStatus}`)
     }
 
 }
@@ -97,7 +97,7 @@ async function skipNext() {
 async function operatePlayer() {
     let res = await fetch(`${apiUrl}/getOperations`, { mode: "cors" });
     let arr = await res.json();
-    console.log(arr);
+    //console.log(arr);
     if (arr == null) return;
     if (arr.length != 0) {
         for (let i = 0; i < arr.length(); i++) {

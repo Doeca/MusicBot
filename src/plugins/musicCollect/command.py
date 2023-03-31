@@ -25,6 +25,8 @@ playingMatcher = on_regex(
     '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=group_checker)
 commandMatcher = on_command(
     "orderStart", permission=SUPERUSER, rule=group_checker)
+stopMatcher = on_command(
+    "orderStop", permission=SUPERUSER, rule=group_checker)
 banMatcher = on_command("ban", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
 keyMatcher = on_command("addkey", permission=(
@@ -113,10 +115,19 @@ async def banID(arg: str = ArgStr('arg')):
 
 
 @commandMatcher.handle()
-async def startOrder():
-    logger.debug("receive")
+async def startOrder(e: Event, bot: Bot):
     await cron.run_start_order()
+    if config.getValue("debug") == 1:
+        path = f"./debug.log"
+        fp = open(path, "r")
+        config.setValue('orderList', json.loads(fp.read()))
+        fp.close()
+        logger.debug("已载入本地听歌列表")
+        await bot.send(e, "已载入本地听歌列表", at_sender=True, reply_message=True)
 
+@stopMatcher.handle()
+async def stopOrder(e: Event, bot: Bot):
+    await cron.run_stop_order()
 
 @keyMatcher.handle()
 async def banHandle(matcher: Matcher, args: Message = CommandArg()):

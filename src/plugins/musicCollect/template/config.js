@@ -100,7 +100,7 @@ async function operatePlayer() {
     //console.log(arr);
     if (arr == null) return;
     if (arr.length != 0) {
-        for (let i = 0; i < arr.length(); i++) {
+        for (let i = 0; i < arr.length; i++) {
             if (arr[i].type == 'next')
                 await loadPlayer(true);
             if (arr[i].type == 'volume')

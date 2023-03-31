@@ -18,13 +18,6 @@ async def run_start_order():
 
     logger.info(f"点歌开启，日志文件：./store/{fileLog}")
 
-    if config.getValue("debug") == 1:
-        path = f"./debug.log"
-        fp = open(path, "r")
-        config.setValue('orderList', json.loads(fp.read()))
-        fp.close()
-        logger.debug("已载入本地听歌列表")
-
     bot: Bot = get_bot(config.bot.bot_id)
     for gid in config.bot.notice_id:
         await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card='激情点歌ing 私发/群聊 分享链接 即可点歌')

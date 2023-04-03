@@ -82,6 +82,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
 async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):
     # global orderList
+    
     orderPeople = config.getValue('orderPeople')
     orderList = config.getValue('orderList')
     maxList = config.getValue('maxList')

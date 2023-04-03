@@ -40,21 +40,21 @@ async def run_stop_order():
         await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
 
 
-@scheduler.scheduled_job("cron", id="startAM", hour=config.bot.set_time[0], minute=config.bot.set_time[1])
-async def stMissionAm():
-    await run_start_order()
+# @scheduler.scheduled_job("cron", id="startAM", hour=config.bot.set_time[0], minute=config.bot.set_time[1])
+# async def stMissionAm():
+#     await run_start_order()
 
 
-@scheduler.scheduled_job("cron", id="startPM", hour=config.bot.set_time[2], minute=config.bot.set_time[3])
-async def stMissionPm():
-    await run_start_order()
+# @scheduler.scheduled_job("cron", id="startPM", hour=config.bot.set_time[2], minute=config.bot.set_time[3])
+# async def stMissionPm():
+#     await run_start_order()
 
 
-@scheduler.scheduled_job("cron", id="stopAM", hour=config.bot.set_time[4], minute=config.bot.set_time[5])
-async def stopMissionAm():
-    await run_stop_order()
+# @scheduler.scheduled_job("cron", id="stopAM", hour=config.bot.set_time[4], minute=config.bot.set_time[5])
+# async def stopMissionAm():
+#     await run_stop_order()
 
 
-@scheduler.scheduled_job("cron", id="stopPM", hour=config.bot.set_time[6], minute=config.bot.set_time[7])
-async def stopMissionPm():
-    await run_stop_order()
+# @scheduler.scheduled_job("cron", id="stopPM", hour=config.bot.set_time[6], minute=config.bot.set_time[7])
+# async def stopMissionPm():
+#     await run_stop_order()

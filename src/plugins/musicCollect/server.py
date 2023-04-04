@@ -124,8 +124,7 @@ def get_operations(botid: int):
 async def change_settings(setting: Setting):
     config.create_bot(setting.id, {'groups': setting.groups, 'card': setting.card,
                     'maxList': setting.maxList, 'set_time': setting.set_time})
-    print(setting)
-    return setting
+    return "保存设置成功"
 
 
 @app.get("/getSettings")

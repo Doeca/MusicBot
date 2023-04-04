@@ -1,33 +1,25 @@
 import requests
 from . import config
+from typing import Union
 from nonebot.utils import run_sync
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent
 
 
 @run_sync
 def httpGet(url):
     return requests.get(url)
 
+
 def unescape(str: str):
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
 
-def currentPlay():
-    # orderList = config.getValue('orderList')
-    # id = 0
-    # tmpID = 0
-    # for v in orderList:
-    #     if (v['played'] == 1):
-    #         tmpID = v['id']
-    #     else:
-    #         id = tmpID
-    #         break
-    # id = tmpID
-    # return id
-    return config.getValue('currentID')
+def currentPlay(id):
+    return config.getVal(id, 'currentID')
 
 
-def generateList():
-    orderList = config.getValue('orderList')
+def generateList(id):
+    orderList = config.getVal(id, 'orderList')
     length = len(orderList)
     res = '🗒歌曲列表（🅿️正在播放）：'
     id = currentPlay()
@@ -46,24 +38,24 @@ def generateList():
         return res
 
 
-def addOperation(type: str, para = 0):
-    opertaionList = config.getValue('opertaionList')
+def addOperation(id, type: str, para=0):
+    opertaionList = config.getVal(id, 'opertaionList')
     temp = dict()
     temp['type'] = type
     temp['para'] = para
     opertaionList.append(temp)
 
 
-def generatePlay():
-    orderList = config.getValue('orderList')
+def generatePlay(id):
+    orderList = config.getVal(id, 'orderList')
     id = currentPlay()
     if (id == 0):
         return '👁‍🗨当前没有在播放歌曲'
     return f"🅿️当前歌曲【{orderList[id-1]['name']} - {orderList[id-1]['author']}】"
 
 
-def generateBlack():
-    blackList = config.getValue('blackList')
+def generateBlack(id):
+    blackList = config.getVal(id, 'blackList')
     length = len(blackList)
     res = '📄歌曲黑名单：\n'
     i = 0
@@ -75,7 +67,7 @@ def generateBlack():
     if i == 0:
         res += "🈚️任何歌曲"
 
-    blackKeyList = config.getValue('blackKeyList')
+    blackKeyList = config.getVal(id, 'blackKeyList')
     length = len(blackKeyList)
     res += '\n关键词列表：\n'
     j = 0
@@ -89,9 +81,9 @@ def generateBlack():
     return res
 
 
-def isBlack(name: str):
-    blackList = config.getValue('blackList')
-    blackKeyList = config.getValue('blackKeyList')
+def isBlack(id, name: str):
+    blackList = config.getVal(id, 'blackList')
+    blackKeyList = config.getVal(id, 'blackKeyList')
     if name in blackList:
         return True
     for v in blackKeyList:
@@ -100,13 +92,13 @@ def isBlack(name: str):
     return False
 
 
-def getSongList(ex=None):
+def getSongList(id, ex=None):
     """
     获取歌名列表，若传入ex则返回ex的歌名列表（配合获取指定人歌单）
     """
     songList = list()
     if (ex == None):
-        orderList = config.getValue('orderList')
+        orderList = config.getVal(id, 'orderList')
     else:
         orderList = ex
     for v in orderList:
@@ -114,28 +106,43 @@ def getSongList(ex=None):
     return songList
 
 
-def getOrder(qq: int):
+def getOrder(id, qq: int):
     """
     根据QQ获取其所点的所有歌曲
     """
     songList = list()
-    orderList = config.getValue('orderList')
+    orderList = config.getVal(id, 'orderList')
     for v in orderList:
         if (v['uin'] == qq):
             songList.append(v)
     return songList
 
 
-def changeOrder(fir: int, sec: int):
-    orderList = config.getValue('orderList')[:]
-    rawList: list = config.getValue('orderList')
+def changeOrder(id, fir: int, sec: int):
+    orderList = config.getVal(id, 'orderList')[:]
+    rawList: list = config.getVal(id, 'orderList')
     sec_data = orderList[sec-1]
 
     rawList.pop(sec-1)
     rawList.insert(fir, sec_data)
-    
-    id = 1
+
+    sid = 1
     for v in rawList:
-        v['id'] = id
-        id = id + 1
+        v['id'] = sid
+        sid = sid + 1
     return True
+
+
+async def getID(bot: Bot):
+    v = await bot.get_login_info()
+    while not isinstance(v, dict):
+        v = await bot.get_login_info()
+    return v['user_id']
+
+async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
+    botid = await getID(bot)
+    if (config.getSetting(botid) == None):
+        return False
+    if e.message_type == 'private':
+        return True
+    return e.group_id in config.getVal(botid, 'groups')

@@ -1,8 +1,18 @@
 import os
 import json
-from nonebot import logger
+
+from nonebot import logger, get_driver
+from pydantic import BaseModel, Extra
+
+
+class Config(BaseModel, extra=Extra.ignore):
+    backend_url: str
+    music_api: str
+
+
 botList = list()
 botSettings = dict()
+system = Config.parse_obj(get_driver().config)
 
 
 def read_setting(id):
@@ -25,8 +35,9 @@ def read_setting(id):
         fs = open(f"./settings/{id}/info.json", 'r')
         info = json.load(fs)
         # 读取平时的名片，最大点歌数量，点歌时间段
-        valTable['normal_card'] = info['card']
-        valTable['maxList'] = info['max_num']
+        valTable['groups'] = info['groups']
+        valTable['card'] = info['card']
+        valTable['maxList'] = info['maxList']
         valTable['set_time'] = info['set_time']
         fs.close()
     else:
@@ -60,6 +71,7 @@ for id in botList:
 
 
 def create_bot(id, setting: dict):
+    from . import cron
     res = 0
     if id not in botList:
         botList.append(id)
@@ -67,16 +79,21 @@ def create_bot(id, setting: dict):
             os.makedirs(f'./store{id}')
         if not os.path.exists(f'./settings/{id}'):
             os.makedirs(f'./settings/{id}')
+            
+        fs = open(f"./settings/act.json", 'w')
+        fs.write(json.dumps(botList))
+        fs.close()
+
         res += 1
     fs = open(f"./settings/{id}/info.json", 'w')
     fs.write(json.dumps(setting))
     fs.close()
     res += 2
-    if(res == 3):
+    if (res == 3):
         read_setting(id)
-        # 创建定时任务
+        cron.initialize_cron()
     return res
-        
+
 
 def getSetting(key: str):
     return botSettings.get(key)
@@ -85,3 +102,20 @@ def getSetting(key: str):
 def setSetting(id, val: dict):
     botSettings[id] = val
     return True
+
+
+def getVal(id, key, default=None):
+    v = botSettings.get(id)
+    if (v != None):
+        return v.get(key, default)
+    else:
+        return default
+
+
+def setVal(id, key, val):
+    v = botSettings.get(id)
+    if (v != None):
+        botSettings[id][key] = val
+        return True
+    else:
+        return False

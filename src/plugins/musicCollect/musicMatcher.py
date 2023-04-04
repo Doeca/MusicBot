@@ -9,16 +9,22 @@ from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
-apiUrl = config.bot.music_api
+apiUrl = config.system.music_api
 
-wyMatcher = on_regex('\[CQ:json.*?"appid":100495085', priority=1)
-qqMatcher = on_regex('\[CQ:json.*?"appid":100497308', priority=1)
+
+
+
+wyMatcher = on_regex('\[CQ:json.*?"appid":100495085',
+                     priority=1, rule=util.group_checker)
+qqMatcher = on_regex('\[CQ:json.*?"appid":100497308',
+                     priority=1, rule=util.group_checker)
 
 
 @qqMatcher.handle()
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
     matcher.stop_propagation()
-    if (config.getValue('orderSwitch') == 0):
+    botid = await util.getID(bot)
+    if (config.getVal(botid, 'orderSwitch') == 0):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
@@ -32,36 +38,39 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     resp = await util.httpGet(f"{apiUrl}/qq/detail?id={mid}")
     if resp.status_code != 200:
-        if (config.getValue('debug') == 1):
+        if (config.getVal(botid, 'debug') == 1):
             logger.debug(resp.text)
-            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nmid:{mid}\nraw msg:{msg}",auto_escape=True)
+            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nmid:{mid}\nraw msg:{msg}", auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()
     urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
 
-    await addToList(e, bot, songInfo['name'], songInfo['author'], urls)
+    await addToList(botid, e, bot, songInfo['name'], songInfo['author'], urls)
 
 
 @wyMatcher.handle()
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
     matcher.stop_propagation()
-    if (config.getValue('orderSwitch') == 0):
+    botid = await util.getID(bot)
+    if (config.getVal(botid, 'orderSwitch') == 0):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
     id = '0'
     try:
-        matchObj = re.search(r'http:\/\/music\.163\.com\/song\/([0-9]{1,13})\?', msg, re.M | re.I)
-        if(matchObj != None):
+        matchObj = re.search(
+            r'http:\/\/music\.163\.com\/song\/([0-9]{1,13})\?', msg, re.M | re.I)
+        if (matchObj != None):
             id = matchObj.group(1)
         else:
-            matchObj = re.search(r'id=([0-9]{1,13})&amp;user', msg, re.M | re.I)
+            matchObj = re.search(
+                r'id=([0-9]{1,13})&amp;user', msg, re.M | re.I)
             id = matchObj.group(1)
     except:
-        if (config.getValue('debug') == 1):
+        if (config.getVal(botid, 'debug') == 1):
             logger.debug(resp.text)
-            await bot.send_private_msg(user_id=1124468334, message=f"正则匹配失败，相关日志：\nraw msg:{msg}",auto_escape=True)
+            await bot.send_private_msg(user_id=1124468334, message=f"正则匹配失败，相关日志：\nraw msg:{msg}", auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     else:
@@ -69,34 +78,34 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     resp = await util.httpGet(f"{apiUrl}/wy/detail?id={id}")
     if resp.status_code != 200:
-        if (config.getValue('debug') == 1):
+        if (config.getVal(botid, 'debug') == 1):
             logger.debug(resp.text)
-            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nid:{id}\nraw msg:{msg}",auto_escape=True)
+            await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nid:{id}\nraw msg:{msg}", auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()
     urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
 
-    await addToList(e, bot, songInfo['name'], songInfo['author'], urls)
+    await addToList(botid, e, bot, songInfo['name'], songInfo['author'], urls)
 
 
-async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):
+async def addToList(botid, e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, name: str, author: str, urls: list):
     # global orderList
-    
-    orderPeople = config.getValue('orderPeople')
-    orderList = config.getValue('orderList')
-    maxList = config.getValue('maxList')
+
+    orderPeople = config.getVal(botid, 'orderPeople')
+    orderList = config.getVal(botid, 'orderList')
+    maxList = config.getVal(botid, 'maxList')
     if util.isBlack(name):
         await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):
         await bot.send(e, f"每时段每人限点2首，你无法继续点歌🫣", at_sender=True, reply_message=True)
         return
-    if len(orderList) >= config.getValue('maxList'):
+    if len(orderList) >= config.getVal(botid, 'maxList'):
         await bot.send(e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",
                        at_sender=True, reply_message=True)
         return
-    if name in util.getSongList():
+    if name in util.getSongList(botid):
         await bot.send(e, f"很抱歉，《{name}》已经被别人点过了，换首别的歌吧😵",
                        at_sender=True, reply_message=True)
         return
@@ -115,12 +124,12 @@ async def addToList(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     tempInfo['uin'] = e.user_id
 
     orderList.append(tempInfo)
-    path = f"./store/{config.getValue('fileLog')}"
+    path = f"./store/{botid}/{config.getVal(botid,'fileLog')}"
     fp = open(path, "w")
     fp.write(json.dumps(orderList))
     fp.close()
 
-    if (tempInfo['id'] >= config.getValue('maxList')):
-        for gid in config.bot.notice_id:
-            await bot.set_group_card(group_id=gid, user_id=config.bot.bot_id, card='点歌列表已满，努力播放中～')
+    if (tempInfo['id'] >= config.getVal(botid, 'maxList')):
+        for gid in config.getVal(botid, "groups"):
+            await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
     await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)

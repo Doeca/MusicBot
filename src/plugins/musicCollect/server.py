@@ -1,11 +1,20 @@
 import nonebot
 from . import config
 from nonebot import get_bot
+from pydantic import BaseModel
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from nonebot.adapters.onebot.v11 import Bot
 from fastapi.middleware.cors import CORSMiddleware
+
+
+class Setting(BaseModel):
+    id: int
+    groups: list
+    card: str
+    maxList: int
+    set_time: list
 
 
 app: FastAPI = nonebot.get_app()
@@ -17,17 +26,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 templates = Jinja2Templates(directory="./src/plugins/musicCollect/template")
-app.mount("/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
+app.mount(
+    "/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
 
 
 @app.get("/")
-async def ret_page(request: Request):
+async def ret_page(request: Request, botid: int):
+    if (config.getSetting(botid) == None):
+        return {"res": '-1'}
     return templates.TemplateResponse(
         "index.html",
         {
-            "request": request
+            "request": request,
+            "botid": botid
         }
     )
+
 
 @app.get("/landing.html")
 async def ret_page(request: Request):
@@ -38,40 +52,46 @@ async def ret_page(request: Request):
         }
     )
 
+
 @app.get("/config.js")
-async def ret_page(request: Request):
+async def ret_page(request: Request, botid: int):
     return templates.TemplateResponse(
         "config.js",
         {
             "request": request,
-            "apiUrl": config.bot.bot_api
+            "apiUrl": config.system.backend_url,
+            "botid": botid
         }
     )
 
 
 @app.get("/getLatestID")
-async def read_id():
-    orderList = config.getValue('orderList')
+async def read_id(botid: int):
+    if (config.getSetting(botid) == None):
+        return {"res": '-1'}
+    orderList = config.getVal(botid, 'orderList')
     for v in orderList:
         if (v['played'] == 0):
             return {"res": v['id']}
     if len(orderList) == 0:
         return {"res": '-1'}
-    id = config.getValue('currentID') + 1
+    id = config.getVal(botid, 'currentID') + 1
     if id > len(orderList):
         id = 1
     return {"res": id}
 
 
 @app.get("/getPlayInfo")
-async def play_id(id: int = 1):
-    orderList = config.getValue('orderList')
+async def play_id(botid: int, id: int = 1):
+    if (config.getSetting(botid) == None):
+        return {"res": '-1'}
+    orderList = config.getVal(botid, 'orderList')
     for v in orderList:
         if (v['id'] == id):
             v['played'] = 1
-            config.setValue('currentID',id)
-            bot = get_bot(config.bot.bot_id)
-            for gid in config.bot.notice_id:
+            config.setVal(botid, 'currentID', id)
+            bot: Bot = get_bot(botid)
+            for gid in config.getVal(id, "groups"):
                 await bot.send_group_msg(group_id=gid,
                                          message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
             return v
@@ -79,9 +99,23 @@ async def play_id(id: int = 1):
 
 
 @app.get("/getOperations")
-def get_operations():
-    opertaionList = config.getValue('opertaionList')
+def get_operations(botid: int):
+    if (config.getSetting(botid) == None):
+        return {"res": '-1'}
+    opertaionList = config.getVal(botid, 'opertaionList')
     res = opertaionList[:]
     opertaionList.clear()
     return res
 
+
+@app.post("/changeSettings")
+async def change_settings(setting: Setting):
+    config.create_bot(setting['id'], setting)
+    return {'res': "0"}
+
+
+@app.get("/getSettings")
+async def play_id(botid: int):
+    if botid == 0:
+        return {"res": -1}
+    return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", []), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0])}

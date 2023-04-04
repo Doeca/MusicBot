@@ -17,16 +17,16 @@
         body {
             text-rendering: auto;
         }
-        
+
         #evanyou-canvas {
             z-index: -1 !important;
         }
-        
+
         .aplayer-wrap {
             max-width: 700px;
             margin: 20px 0;
         }
-        
+
         .sidebar-toggle {
             z-index: 90;
         }
@@ -39,14 +39,14 @@
     <script src="{{ url_for('static',path='/js/hls.min.js') }}"></script>
     <script src="{{ url_for('static',path='/js/evanyou.min.js') }}"></script>
     <script src="{{ url_for('static',path='/js/docute.js') }}"></script>
-    <script src="./config.js"></script>
+    <script src="./config.js?botid={{ botid }}"></script>
     <!-- livereload script placeholder -->
     <!-- don't remove this part end -->
 </body>
 
 
 <script>
-    window.onbeforeunload = function() {
+    window.onbeforeunload = function () {
         return "关闭网页将失去未播放的歌曲，确定关闭吗？";
     };
 </script>

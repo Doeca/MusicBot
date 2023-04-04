@@ -1,4 +1,5 @@
 let apiUrl = '{{ apiUrl }}';
+let botid = '{{ botid }}' ;
 let delay = 1000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
@@ -55,7 +56,7 @@ async function loadPlayer(skipCheck) {
             return;
     }
     //获取最新id，获取播放信息然后进行
-    let res = await fetch(`${apiUrl}/getLatestID`, { mode: "cors" }).catch(err => { })
+    let res = await fetch(`${apiUrl}/getLatestID?botid=${botid}`, { mode: "cors" }).catch(err => { })
     let resp = await res.json();
 
     id = resp.res;
@@ -73,7 +74,7 @@ async function skipNext() {
     let ap = window.ap1;
     ap.pause();
     ap.list.clear();
-    let res = await fetch(`${apiUrl}/getPlayInfo?id=${currentID}`, { mode: "cors" });
+    let res = await fetch(`${apiUrl}/getPlayInfo?id=${currentID}&botid=${botid}`, { mode: "cors" });
 
     let resp = await res.json();
     if (resp.res == -1) {
@@ -95,7 +96,7 @@ async function skipNext() {
 
 
 async function operatePlayer() {
-    let res = await fetch(`${apiUrl}/getOperations`, { mode: "cors" });
+    let res = await fetch(`${apiUrl}/getOperations?botid=${botid}`, { mode: "cors" });
     let arr = await res.json();
     //console.log(arr);
     if (arr == null) return;

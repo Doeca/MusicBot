@@ -20,7 +20,7 @@ async def run_start_order(id):
 
     logger.info(f"点歌开启，日志文件：./store/{fileLog}")
 
-    bot: Bot = get_bot(id)
+    bot: Bot = get_bot(str(id))
     for gid in config.getVal(id,"groups"):
         await bot.set_group_card(group_id=gid, user_id=id, card='激情点歌ing 私发/群聊 分享链接 即可点歌')
         await bot.send_group_msg(group_id=gid,
@@ -36,7 +36,7 @@ async def run_stop_order(id):
     config.getVal(id, 'orderList').clear()
     config.getVal(id, 'opertaionList').clear()
 
-    bot: Bot = get_bot(id)
+    bot: Bot = get_bot(str(id))
 
     for gid in config.getVal(id, "groups"):
         await bot.set_group_card(group_id=gid, user_id=id, card=config.getVal(id, "card"))
@@ -46,32 +46,35 @@ async def run_stop_order(id):
 def initialize_cron():
     for id in config.botList:
         set_time = config.getVal(id, "set_time")
-
         if cronList.get(f"{id}AMSTART") != f"{set_time[0]}:{set_time[1]}":
-            scheduler.remove_job(f"{id}AMSTART")
-            scheduler.add_job(run_start_order, "interval",
-                              hour=set_time[0], minute=set_time[1], id=f"{id}AMSTART",  kwargs={id: id})
+            if cronList.get(f"{id}AMSTART") !=  None:
+                scheduler.remove_job(f"{id}AMSTART")
+            scheduler.add_job(run_start_order, "cron",
+                              hour=set_time[0], minute=set_time[1], id=f"{id}AMSTART",  args=[id])
             cronList[f"{id}AMSTART"] = f"{set_time[0]}:{set_time[1]}"
             logger.info(f"启动：bot({id}) AMSTART")
 
         if cronList.get(f"{id}PMSTART") != f"{set_time[2]}:{set_time[3]}":
-            scheduler.remove_job(f"{id}PMSTART")
-            scheduler.add_job(run_start_order, "interval",
-                              hour=set_time[2], minute=set_time[3], id=f"{id}PMSTART",  kwargs={id: id})
+            if cronList.get(f"{id}PMSTART") !=  None:
+                scheduler.remove_job(f"{id}PMSTART")
+            scheduler.add_job(run_start_order, "cron",
+                              hour=set_time[2], minute=set_time[3], id=f"{id}PMSTART", args=[id])
             cronList[f"{id}PMSTART"] = f"{set_time[2]}:{set_time[3]}"
             logger.info(f"启动：bot({id}) PMSTART")
 
         if cronList.get(f"{id}AMSTOP") != f"{set_time[4]}:{set_time[5]}":
-            scheduler.remove_job(f"{id}AMSTOP")
-            scheduler.add_job(run_stop_order, "interval",
-                              hour=set_time[4], minute=set_time[5], id=f"{id}AMSTOP",  kwargs={id: id})
+            if cronList.get(f"{id}AMSTOP") !=  None:
+                scheduler.remove_job(f"{id}AMSTOP")
+            scheduler.add_job(run_stop_order, "cron",
+                              hour=set_time[4], minute=set_time[5], id=f"{id}AMSTOP",  args=[id])
             cronList[f"{id}AMSTOP"] = f"{set_time[4]}:{set_time[5]}"
             logger.info(f"启动：bot({id}) AMSTOP")
 
         if cronList.get(f"{id}PMSTOP") != f"{set_time[6]}:{set_time[7]}":
-            scheduler.remove_job(f"{id}PMSTOP")
-            scheduler.add_job(run_stop_order, "interval",
-                              hour=set_time[6], minute=set_time[7], id=f"{id}PMSTOP",  kwargs={id: id})
+            if cronList.get(f"{id}PMSTOP") !=  None:
+                scheduler.remove_job(f"{id}PMSTOP")
+            scheduler.add_job(run_stop_order, "cron",
+                              hour=set_time[6], minute=set_time[7], id=f"{id}PMSTOP",  args=[id])
             cronList[f"{id}PMSTOP"] = f"{set_time[6]}:{set_time[7]}"
             logger.info(f"启动：bot({id}) PMSTOP")
 

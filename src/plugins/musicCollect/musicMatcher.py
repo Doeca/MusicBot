@@ -95,7 +95,7 @@ async def addToList(botid, e: Union[PrivateMessageEvent, GroupMessageEvent], bot
     orderPeople = config.getVal(botid, 'orderPeople')
     orderList = config.getVal(botid, 'orderList')
     maxList = config.getVal(botid, 'maxList')
-    if util.isBlack(name):
+    if util.isBlack(botid,name):
         await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):

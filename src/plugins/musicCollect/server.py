@@ -43,6 +43,18 @@ async def ret_page(request: Request, botid: int):
     )
 
 
+@app.get("/setting")
+async def ret_page(request: Request, botid: int):
+    return templates.TemplateResponse(
+        "set.html",
+        {
+            "request": request,
+            "botid": botid,
+            "apiUrl": config.system.backend_url
+        }
+    )
+
+
 @app.get("/landing.html")
 async def ret_page(request: Request):
     return templates.TemplateResponse(
@@ -90,8 +102,8 @@ async def play_id(botid: int, id: int = 1):
         if (v['id'] == id):
             v['played'] = 1
             config.setVal(botid, 'currentID', id)
-            bot: Bot = get_bot(botid)
-            for gid in config.getVal(id, "groups"):
+            bot: Bot = get_bot(str(botid))
+            for gid in config.getVal(botid, "groups"):
                 await bot.send_group_msg(group_id=gid,
                                          message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
             return v
@@ -110,12 +122,14 @@ def get_operations(botid: int):
 
 @app.post("/changeSettings")
 async def change_settings(setting: Setting):
-    config.create_bot(setting['id'], setting)
-    return {'res': "0"}
+    config.create_bot(setting.id, {'groups': setting.groups, 'card': setting.card,
+                    'maxList': setting.maxList, 'set_time': setting.set_time})
+    print(setting)
+    return setting
 
 
 @app.get("/getSettings")
 async def play_id(botid: int):
     if botid == 0:
         return {"res": -1}
-    return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", []), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0])}
+    return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", [123, 456]), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0])}

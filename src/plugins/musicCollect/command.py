@@ -89,10 +89,11 @@ async def banID(bot: Bot, arg: str = ArgStr('arg')):
         if id == 0 or id > len(orderList):
             await banMatcher.reject(f"歌曲序号：{id}不存在，请重新输入")
         name = orderList[id-1]['name']
+        rawList: list = config.getVal(botid, 'orderList')
         if id == util.currentPlay(botid):
             util.addOperation(botid, 'next')
-        rawList: list = config.getVal(botid, 'orderList')
-        rawList.pop(id - 1)
+        if id > util.currentPlay(botid):
+            rawList.pop(id - 1)
         id = 1
         for v in rawList:
             v['id'] = id
@@ -101,7 +102,7 @@ async def banID(bot: Bot, arg: str = ArgStr('arg')):
         name = line
 
     if name in blackList:
-        await banMatcher.reject(f"歌曲《{name}》已存在于黑名单中，无需重复拉黑")
+        await banMatcher.finish(f"歌曲《{name}》已存在于黑名单中，无需重复拉黑")
     blackList.append(name)
 
     fs = open(f"./settings/{botid}/blackList.json", 'w')
@@ -147,7 +148,7 @@ async def banID(bot: Bot, arg: str = ArgStr('arg')):
         await keyMatcher.finish(f"操作已取消")
 
     if name in blackKeyList:
-        await keyMatcher.reject(f"关键词'{name}'已存在于黑名单中，无需重复加入")
+        await keyMatcher.finish(f"关键词'{name}'已存在于黑名单中，无需重复加入")
     blackKeyList.append(name)
 
     fs = open(f"./settings/{botid}/blackKeyList.json", 'w')

@@ -17,7 +17,7 @@ system = Config.parse_obj(get_driver().config)
 
 def read_setting(id):
     if not os.path.exists(f'./store/{id}'):
-        os.makedirs(f'./store{id}')
+        os.makedirs(f'./store/{id}')
     if not os.path.exists(f'./settings/{id}'):
         os.makedirs(f'./settings/{id}')
 
@@ -76,7 +76,7 @@ def create_bot(id, setting: dict):
     if id not in botList:
         botList.append(id)
         if not os.path.exists(f'./store/{id}'):
-            os.makedirs(f'./store{id}')
+            os.makedirs(f'./store/{id}')
         if not os.path.exists(f'./settings/{id}'):
             os.makedirs(f'./settings/{id}')
             
@@ -89,9 +89,8 @@ def create_bot(id, setting: dict):
     fs.write(json.dumps(setting))
     fs.close()
     res += 2
-    if (res == 3):
-        read_setting(id)
-        cron.initialize_cron()
+    read_setting(id)
+    cron.initialize_cron()
     return res
 
 
@@ -106,6 +105,7 @@ def setSetting(id, val: dict):
 
 def getVal(id, key, default=None):
     v = botSettings.get(id)
+    # print(v)
     if (v != None):
         return v.get(key, default)
     else:

@@ -22,7 +22,7 @@ def generateList(id):
     orderList = config.getVal(id, 'orderList')
     length = len(orderList)
     res = '🗒歌曲列表（🅿️正在播放）：'
-    id = currentPlay()
+    id = currentPlay(id)
     if length == 0:
         return '😗当前歌曲列表为🈳️'
     else:

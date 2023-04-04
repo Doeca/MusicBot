@@ -12,23 +12,27 @@ from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent, PrivateMessageEvent
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
+
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
     botid = await util.getID(bot)
     if e.message_type == 'private':
         for i in config.getVal(botid, 'groups'):
-            info = await bot.get_group_member_info(group_id=i,user_id=e.user_id)
+            info = await bot.get_group_member_info(group_id=i, user_id=e.user_id, no_cache=True)
             if info["role"] != 'member':
                 return True
         return False
-    return True
+    else:
+        info = await bot.get_group_member_info(group_id=e.group_id, user_id=e.user_id, no_cache=True)
+        if info["role"] != 'member':
+            return True
+        return False
 
 
 setMatcher = on_command(
-    "setting", aliases={"设置", "初始化"}, permission=(
-        SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
+    "setting", aliases={"设置", "初始化"},  rule=group_checker)
 playlinkMatcher = on_command(
-    "playlink", aliases={"播放地址"}, permission=(
-        SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=group_checker)
+    "playlink", aliases={"播放地址"}, rule=group_checker)
+
 
 @setMatcher.handle()
 async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):

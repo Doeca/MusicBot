@@ -109,11 +109,16 @@
             let maxList = document.getElementById("maxList").value;
             let groups = Array()
             gids = document.getElementById("groups").value;
+            if(gids == "123,456")
+            {
+                alert("请输入点歌群号！");
+                document.getElementById("groups").focus();
+                return false;
+            }
             gids = gids.replaceAll("，", ",");
             gid = gids.split(",")
             gid.forEach(element => {
-                console.log(element)
-                groups.push(parseInt(element))
+                groups.push(parseInt(element.trim()))
             });
 
 

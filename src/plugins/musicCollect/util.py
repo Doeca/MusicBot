@@ -1,3 +1,4 @@
+import time
 import requests
 from . import config
 from typing import Union
@@ -48,7 +49,7 @@ def addOperation(id, type: str, para=0):
 
 def generatePlay(id):
     orderList = config.getVal(id, 'orderList')
-    id = currentPlay()
+    id = currentPlay(id)
     if (id == 0):
         return '👁‍🗨当前没有在播放歌曲'
     return f"🅿️当前歌曲【{orderList[id-1]['name']} - {orderList[id-1]['author']}】"
@@ -133,11 +134,34 @@ def changeOrder(id, fir: int, sec: int):
     return True
 
 
+async def isRunning(botid):
+    status = config.getVal(botid, 'orderSwitch')
+    ntime = int(time.strftime("%H", time.localtime()))*60 + \
+        int(time.strftime("%M", time.localtime()))
+    set_time = config.getVal(botid, 'set_time')
+    amStart = set_time[0] * 60 + set_time[1]
+    pmStart = set_time[2] * 60 + set_time[3]
+    amStop = set_time[4] * 60 + set_time[5]
+    pmStop = set_time[6] * 60 + set_time[7]
+    if ((amStart < ntime and ntime < amStop) or (pmStart < ntime and ntime < pmStop)):
+        if(status !=  1):
+            from . import cron
+            await cron.run_start_order(botid)
+        return True
+    else:
+        if(status !=  0):
+            from . import cron
+            await cron.run_stop_order(botid)
+        return False
+
+
+
 async def getID(bot: Bot):
     v = await bot.get_login_info()
     while not isinstance(v, dict):
         v = await bot.get_login_info()
     return v['user_id']
+
 
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
     botid = await getID(bot)

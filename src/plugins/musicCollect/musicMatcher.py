@@ -24,7 +24,8 @@ qqMatcher = on_regex('\[CQ:json.*?"appid":100497308',
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
     matcher.stop_propagation()
     botid = await util.getID(bot)
-    if (config.getVal(botid, 'orderSwitch') == 0):
+    status = await util.isRunning(botid)
+    if (status == False):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
@@ -48,15 +49,16 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     await addToList(botid, e, bot, songInfo['name'], songInfo['author'], urls)
 
-
 @wyMatcher.handle()
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
     matcher.stop_propagation()
     botid = await util.getID(bot)
-    if (config.getVal(botid, 'orderSwitch') == 0):
+    status = await util.isRunning(botid) 
+    if (status == False):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
+    # print(msg)
     id = '0'
     try:
         matchObj = re.search(
@@ -65,11 +67,11 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
             id = matchObj.group(1)
         else:
             matchObj = re.search(
-                r'id=([0-9]{1,13})&amp;user', msg, re.M | re.I)
+                r'\?id=([0-9]{1,13})', msg, re.M | re.I)
             id = matchObj.group(1)
     except:
         if (config.getVal(botid, 'debug') == 1):
-            logger.debug(resp.text)
+            logger.debug(f"当前id:{id}")
             await bot.send_private_msg(user_id=1124468334, message=f"正则匹配失败，相关日志：\nraw msg:{msg}", auto_escape=True)
         await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return

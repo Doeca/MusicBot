@@ -32,6 +32,7 @@ async def run_stop_order(id):
     config.setVal(id, 'orderSwitch', 0)
     config.setVal(id, 'fileLog', '')
     config.setVal(id, 'currentID', 0)
+    config.setVal(id, 'currentTitle', "")
     config.getVal(id, 'orderPeople').clear()
     config.getVal(id, 'orderList').clear()
     config.getVal(id, 'opertaionList').clear()

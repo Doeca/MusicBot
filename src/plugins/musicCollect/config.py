@@ -14,6 +14,10 @@ botList = list()
 botSettings = dict()
 system = Config.parse_obj(get_driver().config)
 
+fs = open(f"./random.store", 'r')
+random = json.loads(s=fs.read())
+fs.close()
+
 
 def read_setting(id):
     if not os.path.exists(f'./store/{id}'):
@@ -26,6 +30,7 @@ def read_setting(id):
     valTable['orderSwitch'] = 0
     valTable['fileLog'] = ''
     valTable['currentID'] = 0
+    valTable['currentTitle'] = ""
     valTable['orderList'] = list()  # 歌曲信息列表
     valTable['orderPeople'] = dict()  # 存放用户点歌数量
     valTable['opertaionList'] = list()  # 存放传递给前端的操作信息
@@ -79,7 +84,7 @@ def create_bot(id, setting: dict):
             os.makedirs(f'./store/{id}')
         if not os.path.exists(f'./settings/{id}'):
             os.makedirs(f'./settings/{id}')
-            
+
         fs = open(f"./settings/act.json", 'w')
         fs.write(json.dumps(botList))
         fs.close()

@@ -48,11 +48,10 @@ def addOperation(id, type: str, para=0):
 
 
 def generatePlay(id):
-    orderList = config.getVal(id, 'orderList')
-    id = currentPlay(id)
-    if (id == 0):
+    title = config.getVal(id, 'currentTitle')
+    if (title == ""):
         return '👁‍🗨当前没有在播放歌曲'
-    return f"🅿️当前歌曲【{orderList[id-1]['name']} - {orderList[id-1]['author']}】"
+    return f"🅿️当前歌曲【{title}】"
 
 
 def generateBlack(id):
@@ -143,17 +142,20 @@ async def isRunning(botid):
     pmStart = set_time[2] * 60 + set_time[3]
     amStop = set_time[4] * 60 + set_time[5]
     pmStop = set_time[6] * 60 + set_time[7]
+
+    # 点歌时间段内会自动开启，调试模式时点歌时间段外不会自动关闭
     if ((amStart < ntime and ntime < amStop) or (pmStart < ntime and ntime < pmStop)):
-        if(status !=  1):
+        if (status != 1):
             from . import cron
             await cron.run_start_order(botid)
         return True
     else:
-        if(status !=  0):
+        if (status == 1 and config.getVal(botid, "debug") == 1):
+            return True
+        if (status != 0):
             from . import cron
             await cron.run_stop_order(botid)
         return False
-
 
 
 async def getID(bot: Bot):

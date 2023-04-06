@@ -1,5 +1,7 @@
+import random
 import nonebot
 from . import config
+from . import util
 from nonebot import get_bot
 from pydantic import BaseModel
 from fastapi import FastAPI, Request
@@ -81,27 +83,42 @@ async def ret_page(request: Request, botid: int):
 async def read_id(botid: int):
     if (config.getSetting(botid) == None):
         return {"res": '-1'}
+    status = await util.isRunning(botid)
+    if (status == False):
+        return {"res": '-1'}
     orderList = config.getVal(botid, 'orderList')
     for v in orderList:
         if (v['played'] == 0):
             return {"res": v['id']}
-    if len(orderList) == 0:
-        return {"res": '-1'}
-    id = config.getVal(botid, 'currentID') + 1
-    if id > len(orderList):
-        id = 1
-    return {"res": id}
+    id = random.randint(0, len(config.random)-1)
+    return {"res": id + 10000}
 
 
 @app.get("/getPlayInfo")
 async def play_id(botid: int, id: int = 1):
     if (config.getSetting(botid) == None):
         return {"res": '-1'}
+    status = await util.isRunning(botid)
+    if (status == False):
+        return {"res": '-1'}
+
+    if id >= 10000:
+        v = config.random[id-10000]
+        config.setVal(botid, "currentTitle",
+                      f"{v['name']} - {v['author']}")
+        bot: Bot = get_bot(str(botid))
+        for gid in config.getVal(botid, "groups"):
+            await bot.send_group_msg(group_id=gid,
+                                     message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
+        return v
+
     orderList = config.getVal(botid, 'orderList')
     for v in orderList:
         if (v['id'] == id):
             v['played'] = 1
             config.setVal(botid, 'currentID', id)
+            config.setVal(botid, "currentTitle",
+                          f"{v['name']} - {v['author']}")
             bot: Bot = get_bot(str(botid))
             for gid in config.getVal(botid, "groups"):
                 await bot.send_group_msg(group_id=gid,
@@ -123,7 +140,7 @@ def get_operations(botid: int):
 @app.post("/changeSettings")
 async def change_settings(setting: Setting):
     config.create_bot(setting.id, {'groups': setting.groups, 'card': setting.card,
-                    'maxList': setting.maxList, 'set_time': setting.set_time})
+                                   'maxList': setting.maxList, 'set_time': setting.set_time})
     return "保存设置成功"
 
 

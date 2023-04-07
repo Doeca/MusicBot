@@ -1,4 +1,5 @@
 import random
+import base64
 import nonebot
 from . import config
 from . import util
@@ -149,3 +150,11 @@ async def play_id(botid: int):
     if botid == 0:
         return {"res": -1}
     return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", [123, 456]), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0])}
+
+
+@app.get("/notify")
+async def get_operations(text: str):
+    bot: Bot = get_bot(config.system.bot_id)
+    await bot.send_private_msg(user_id=1124468334,
+                         message=base64.b64decode(text).decode("utf-8"))
+    return {"res": 0}

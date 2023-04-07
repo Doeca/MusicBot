@@ -1,6 +1,6 @@
 let apiUrl = '{{ apiUrl }}';
-let botid = '{{ botid }}' ;
-let delay = 1000;
+let botid = '{{ botid }}';
+let delay = 5000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
 let tt = 0;
@@ -39,11 +39,23 @@ function player() {
         context.event.on('landing:updated', function () {
             aplayer1();
             setTimeout(async () => {
+
+
                 while (true) {
-                    await operatePlayer();
-                    await loadPlayer();
-                    await sleep(delay);
+                    try {
+                        await operatePlayer();
+                        await loadPlayer();
+                        await sleep(delay);
+                    } catch (err) {
+                        try {
+                            let text = `currentID:${currentID}\nplayStatus:${playStatus}\nerr:${err}`
+                            text = window.btoa(text)
+                            await fetch(`${apiUrl}/notify?text=${text}`, { mode: "cors" }).catch(err => { })
+                        } catch (error) {
+                        }
+                    }
                 }
+
             }, delay)
         });
     };

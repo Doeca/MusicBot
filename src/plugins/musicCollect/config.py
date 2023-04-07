@@ -8,6 +8,7 @@ from pydantic import BaseModel, Extra
 class Config(BaseModel, extra=Extra.ignore):
     backend_url: str
     music_api: str
+    bot_id: str
 
 
 botList = list()

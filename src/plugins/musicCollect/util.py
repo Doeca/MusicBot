@@ -143,18 +143,15 @@ async def isRunning(botid):
     amStop = set_time[4] * 60 + set_time[5]
     pmStop = set_time[6] * 60 + set_time[7]
 
-    # 点歌时间段内会自动开启，调试模式时点歌时间段外不会自动关闭
+    # 点歌时间段内会自动开启，点歌时间段外不能自动关闭
     if ((amStart < ntime and ntime < amStop) or (pmStart < ntime and ntime < pmStop)):
         if (status != 1):
             from . import cron
             await cron.run_start_order(botid)
         return True
     else:
-        if (status == 1 and config.getVal(botid, "debug") == 1):
+        if (status == 1):
             return True
-        if (status != 0):
-            from . import cron
-            await cron.run_stop_order(botid)
         return False
 
 

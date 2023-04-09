@@ -19,6 +19,7 @@ class Setting(BaseModel):
     maxList: int
     set_time: list
     vote_need: int = 6
+    maxPer: int = 2
 
 
 app: FastAPI = nonebot.get_app()
@@ -105,7 +106,7 @@ async def play_id(botid: int, id: int = 1):
         return {"res": '-1'}
     config.setVal(botid, "voteNum", 0)
     config.setVal(botid, "votePeople", list())
-    
+
     if id >= 10000:
         v = config.random[id-10000]
         config.setVal(botid, "currentTitle",
@@ -144,7 +145,7 @@ def get_operations(botid: int):
 @app.post("/changeSettings")
 async def change_settings(setting: Setting):
     config.create_bot(setting.id, {'groups': setting.groups, 'card': setting.card,
-                                   'maxList': setting.maxList, 'set_time': setting.set_time})
+                                   'maxList': setting.maxList, 'set_time': setting.set_time, 'vote_need': setting.vote_need, 'maxPer': setting.maxPer})
     return "保存设置成功"
 
 
@@ -152,7 +153,7 @@ async def change_settings(setting: Setting):
 async def play_id(botid: int):
     if botid == 0:
         return {"res": -1}
-    return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", [123, 456]), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0])}
+    return {'res': "0", 'id': botid, 'groups': config.getVal(botid, "groups", [123, 456]), 'card': config.getVal(botid, 'card', '快乐食间点歌bot'), 'maxList': config.getVal(botid, "maxList", 30), 'set_time': config.getVal(botid, "set_time", [11, 30, 17, 30, 13, 30, 19, 0]), 'vote_need': config.getVal(botid, "vote_need", 6), 'maxPer': config.getVal(botid, "maxPer", 2)}
 
 
 @app.get("/notify")

@@ -46,6 +46,7 @@ def read_setting(id):
         valTable['card'] = info['card']
         valTable['maxList'] = info['maxList']
         valTable['set_time'] = info['set_time']
+        valTable['maxPer'] = info.get("maxPer", 2)
         valTable['vote_need'] = info.get("vote_need", 6)
         fs.close()
     else:

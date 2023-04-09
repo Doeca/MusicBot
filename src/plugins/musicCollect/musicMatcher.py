@@ -12,8 +12,6 @@ from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEv
 apiUrl = config.system.music_api
 
 
-
-
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085',
                      priority=1, rule=util.group_checker)
 qqMatcher = on_regex('\[CQ:json.*?"appid":100497308',
@@ -49,11 +47,12 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
 
     await addToList(botid, e, bot, songInfo['name'], songInfo['author'], urls)
 
+
 @wyMatcher.handle()
 async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
     matcher.stop_propagation()
     botid = await util.getID(bot)
-    status = await util.isRunning(botid) 
+    status = await util.isRunning(botid)
     if (status == False):
         await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
@@ -97,11 +96,12 @@ async def addToList(botid, e: Union[PrivateMessageEvent, GroupMessageEvent], bot
     orderPeople = config.getVal(botid, 'orderPeople')
     orderList = config.getVal(botid, 'orderList')
     maxList = config.getVal(botid, 'maxList')
-    if util.isBlack(botid,name):
+    maxPer = config.getVal(botid, "maxPer")
+    if util.isBlack(botid, name):
         await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
-    if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= 2):
-        await bot.send(e, f"每时段每人限点2首，你无法继续点歌🫣", at_sender=True, reply_message=True)
+    if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= maxPer):
+        await bot.send(e, f"每时段每人限点{maxPer}首，你无法继续点歌🫣", at_sender=True, reply_message=True)
         return
     if len(orderList) >= config.getVal(botid, 'maxList'):
         await bot.send(e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",

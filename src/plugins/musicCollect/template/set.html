@@ -57,14 +57,13 @@
                     <p>此网页仅供快乐食间内部使用，请勿在群内等公开场合传播本网页地址</p>
                 </div>
                 <div class="alert alert-info">
-                    <p><b>设置前请参阅操作指导书</b></p>
+                    <p><b>设置的Bot账号为：{{ botid }} 设置前请参阅操作指导书</b></p>
                 </div>
                 <div class="row buy">
                     <form name="getcode" action="/post" id="create" class="form-horizontal"
                         onsubmit="return checkform()">
                         <div class="col-lg-10">
-                            <h5>Bot账号：</h5>
-                            <input type="text" class="form-control" name="botid" id="botid" style="ime-mode:disabled"
+                            <input type="hidden" class="form-control" name="botid" id="botid" style="ime-mode:disabled"
                                 checked="" value="{{ botid }}" readonly />
                             <h5>Bot群名片：</h5>
                             <input type="text" class="form-control" name="card" id="card" style="ime-mode:disabled"
@@ -72,8 +71,11 @@
                             <h5>食堂点歌群号：(用逗号分隔多个群号)</h5>
                             <input type="text" class="form-control" name="groups" id="groups" style="ime-mode:disabled"
                                 checked="" value="" />
-                            <h5>每时段点歌数量上限：</h5>
+                            <h5>每时段点歌数量总上限：</h5>
                             <input type="number" class="form-control" name="maxList" id="maxList"
+                                style="ime-mode:disabled" checked="" value="" />
+                            <h5>每时段个人点歌数量上限：</h5>
+                            <input type="number" class="form-control" name="maxPer" id="maxPer"
                                 style="ime-mode:disabled" checked="" value="" />
                         </div>
 
@@ -91,6 +93,12 @@
                             <input type="time" class="form-control" name="stPMstop" id="stPMstop"
                                 style="ime-mode:disabled" checked="" value="" />
                         </div>
+                        <div class="col-lg-10">
+                            <h5>投票切歌所需票数：</h5>
+                            <input type="number" class="form-control" name="vote_need" id="vote_need"
+                                style="ime-mode:disabled" checked="" value="" />
+
+                        </div>
                         <div class="col-lg-11">
                             <button type="submit" class="btn btn-primary buy-confirm" style="margin-bottom:12"> 保存
                             </button>
@@ -106,11 +114,12 @@
         function checkform() {
             let botid = document.getElementById("botid").value
             let card = document.getElementById("card").value;
+            let per = document.getElementById("maxPer").value;
+            let vote = document.getElementById("vote_need").value;
             let maxList = document.getElementById("maxList").value;
             let groups = Array()
             gids = document.getElementById("groups").value;
-            if(gids == "123,456")
-            {
+            if (gids == "123,456") {
                 alert("请输入点歌群号！");
                 document.getElementById("groups").focus();
                 return false;
@@ -128,7 +137,7 @@
             pmStop = document.getElementById("stPMstop").value.split(":")
             let set_time = [parseInt(amStart[0]), parseInt(amStart[1]), parseInt(pmStart[0]), parseInt(pmStart[1]), parseInt(amStop[0]), parseInt(amStop[1]), parseInt(pmStop[0]), parseInt(pmStop[1])]
             console.log(set_time)
-            let dby = { id: parseInt(botid), groups: groups, card: card, maxList: maxList, set_time: set_time };
+            let dby = { id: parseInt(botid), groups: groups, card: card, maxList: maxList, set_time: set_time, vote_need: vote, maxPer: per };
             let res = fetch(`{{apiUrl}}/changeSettings`, {
                 headers: {
                     "Content-Type": "application/json",
@@ -163,7 +172,9 @@
             gids = gids.substring(1, gids.length)
             document.getElementById("card").value = resp.card
             document.getElementById("maxList").value = resp.maxList
+            document.getElementById("maxPer").value = resp.maxPer
             document.getElementById("groups").value = gids
+            document.getElementById("vote_need").value = resp.vote_need
             document.getElementById("stAMstart").value = handleTime(`${resp.set_time[0]}:${resp.set_time[1]}`)
             document.getElementById("stPMstart").value = handleTime(`${resp.set_time[2]}:${resp.set_time[3]}`)
             document.getElementById("stAMstop").value = handleTime(`${resp.set_time[4]}:${resp.set_time[5]}`)

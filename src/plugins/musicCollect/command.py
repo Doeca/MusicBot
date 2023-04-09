@@ -69,7 +69,7 @@ async def next(e: Event, bot: Bot):
         config.setVal(botid, "votePeople", votePeople)
         if (voteNum >= vote_need):
             util.addOperation(await util.getID(bot), 'next')
-            await bot.send(e, "票数已达标，切换到下一首歌", at_sender=True, reply_message=True)
+            await bot.send(e, "切歌票数已达标，切换到下一首歌", at_sender=True, reply_message=True)
         else:
             await bot.send(e, f"参与投票切歌成功，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
 

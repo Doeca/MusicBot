@@ -36,15 +36,17 @@ def read_setting(id):
     valTable['orderPeople'] = dict()  # 存放用户点歌数量
     valTable['opertaionList'] = list()  # 存放传递给前端的操作信息
     valTable['debug'] = 0
-
+    valTable['voteNum'] = 0
+    valTable['votePeople'] = list()
     if os.path.exists(f"./settings/{id}/info.json"):
         fs = open(f"./settings/{id}/info.json", 'r')
-        info = json.load(fs)
+        info: dict = json.load(fs)
         # 读取平时的名片，最大点歌数量，点歌时间段
         valTable['groups'] = info['groups']
         valTable['card'] = info['card']
         valTable['maxList'] = info['maxList']
         valTable['set_time'] = info['set_time']
+        valTable['vote_need'] = info.get("vote_need", 6)
         fs.close()
     else:
         logger.error("读取不存在的bot数据")

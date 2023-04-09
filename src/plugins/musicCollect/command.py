@@ -13,26 +13,30 @@ from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent, PrivateMe
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 
-
 debugMatcher = on_command("debug", permission=(
     SUPERUSER), rule=util.group_checker)
 listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=util.group_checker)
 playingMatcher = on_regex(
     '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=util.group_checker)
+
+helpMatcher = on_regex(
+    '帮助|\/help', rule=util.group_checker)
 commandMatcher = on_command(
     "orderStart", permission=SUPERUSER, rule=util.group_checker)
 stopMatcher = on_command(
     "orderStop", permission=SUPERUSER, rule=util.group_checker)
-banMatcher = on_command("ban", permission=(
+banMatcher = on_command("ban", aliases={"拉黑"}, permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=util.group_checker)
 keyMatcher = on_command("addkey", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=util.group_checker)
-nextMatcher = on_command("next", permission=(
-    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), rule=util.group_checker)
-
+nextMatcher = on_command("next", aliases={"切歌"}, rule=util.group_checker)
+whoMatcher = on_command("who", aliases={"谁点的", "点歌人"}, rule=util.group_checker)
 blackMatcher = on_fullmatch("黑名单列表", rule=util.group_checker)
 setPriorMatcher = on_command(
-    "setPrior", aliases={"提前", "生日快乐"}, rule=util.group_checker)
+    "setPrior", aliases={"提前", "生日快乐", "顶歌"}, rule=util.group_checker)
+
+volumeMatcher = on_command("volume", permission=(
+    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), aliases={"音量"}, rule=util.group_checker)
 
 
 @blackMatcher.handle()
@@ -42,8 +46,32 @@ async def blackhandle(e: Event, bot: Bot):
 
 @nextMatcher.handle()
 async def next(e: Event, bot: Bot):
-    util.addOperation(await util.getID(bot), 'next')
-    await bot.send(e, "已切换到下一首歌", at_sender=True, reply_message=True)
+    botid = await util.getID(bot)
+    if (util.currentPlay(botid) == 0):
+        await bot.send(e, "当前没有在播放歌曲哦，无法切歌", at_sender=True, reply_message=True)
+        return
+    userid = e.get_user_id()
+    perm = (SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+    res: bool = await perm(bot, e)
+    vote_need = config.getVal(botid, "vote_need", 6)
+    if (res == True):
+        util.addOperation(await util.getID(bot), 'next')
+        await bot.send(e, "已切换到下一首歌", at_sender=True, reply_message=True)
+    else:
+        voteNum = config.getVal(botid, "voteNum")
+        votePeople: list = config.getVal(botid, "votePeople")
+        if (userid in votePeople):
+            await bot.send(e, f"你已经参与过投票了，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
+            return
+        voteNum += 1
+        votePeople.append(userid)
+        config.setVal(botid, "voteNum", voteNum)
+        config.setVal(botid, "votePeople", votePeople)
+        if (voteNum >= vote_need):
+            util.addOperation(await util.getID(bot), 'next')
+            await bot.send(e, "票数已达标，切换到下一首歌", at_sender=True, reply_message=True)
+        else:
+            await bot.send(e, f"参与投票切歌成功，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
 
 
 @listMatcher.handle()
@@ -201,3 +229,75 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], match
     else:
         config.setVal(botid, 'debug', 1)
         await bot.send(message=f"😆Switch to debug mode", event=e)
+
+
+@volumeMatcher.handle()
+async def volumeHandle(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
+    rarg = args.extract_plain_text().strip()
+    volume = rarg
+    logger.debug(f"Key : {volume}")
+    if volume != '':
+        if (volume.find("%") != -1):
+            volume = volume.replace("%", "")
+        volume = float(volume)
+        if (volume > 1):
+            volume = volume*0.01
+        matcher.set_arg("arg", rarg)
+
+
+@volumeMatcher.got("arg", prompt="请输入音量百分比，例如：70%")
+async def banID(bot: Bot, arg: str = ArgStr('arg')):
+    botid = await util.getID(bot)
+    rarg = arg.strip()
+    volume = rarg
+    if volume == '':
+        await keyMatcher.finish(f"操作已取消")
+    else:
+        if (volume.find("%") != -1):
+            volume = volume.replace("%", "")
+        volume = float(volume)
+        if (volume > 1):
+            volume = volume*0.01
+    util.addOperation(botid, "volume", volume)
+    await banMatcher.finish(f"已将音量调整为{rarg}")
+
+
+@helpMatcher.handle()
+async def helpHandle(e: Event, bot: Bot):
+    fs = open("./help.store", "r")
+    text = fs.read()
+    fs.close()
+    await bot.send(e, text, at_sender=True, reply_message=True)
+
+
+@whoMatcher.handle()
+async def banHandle(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
+    botid = await util.getID(bot)
+    id = args.extract_plain_text().strip()
+    logger.debug(f"ID : {id}")
+    if id == '':
+        id = util.currentPlay(botid)
+    elif id.isdigit():
+        id = int(id)
+
+    if id == 0:
+        return
+    if id <= len(config.getVal(botid, 'orderList')):
+        matcher.set_arg("arg", str(id))
+
+
+@whoMatcher.got("arg", prompt="请输入歌曲列表中的序号")
+async def banID(bot: Bot, e: Event, arg: str = ArgStr('arg')):
+    botid = await util.getID(bot)
+    orderList = config.getVal(botid, 'orderList')
+    line = arg.strip()
+    if line.isdigit():
+        id = int(line)
+        if id == 0 or id > len(orderList):
+            await whoMatcher.reject(f"歌曲序号：{id}不存在，请重新输入")
+    else:
+        await whoMatcher.finish(f"操作已取消")
+    userid = orderList[id-1]['uin']
+    info = await bot.get_stranger_info(user_id=userid)
+    name = f"{orderList[id-1]['name']} - {orderList[id-1]['author']}"
+    await bot.send(e, f"歌曲《{name}》的点歌人是：{info['nickname']}({userid})", at_sender=True, reply_message=True)

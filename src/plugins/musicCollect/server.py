@@ -18,6 +18,7 @@ class Setting(BaseModel):
     card: str
     maxList: int
     set_time: list
+    vote_need: int = 6
 
 
 app: FastAPI = nonebot.get_app()
@@ -102,7 +103,9 @@ async def play_id(botid: int, id: int = 1):
     status = await util.isRunning(botid)
     if (status == False):
         return {"res": '-1'}
-
+    config.setVal(botid, "voteNum", 0)
+    config.setVal(botid, "votePeople", list())
+    
     if id >= 10000:
         v = config.random[id-10000]
         config.setVal(botid, "currentTitle",
@@ -156,5 +159,5 @@ async def play_id(botid: int):
 async def get_operations(text: str):
     bot: Bot = get_bot(config.system.bot_id)
     await bot.send_private_msg(user_id=1124468334,
-                         message=base64.b64decode(text).decode("utf-8"))
+                               message=base64.b64decode(text).decode("utf-8"))
     return {"res": 0}

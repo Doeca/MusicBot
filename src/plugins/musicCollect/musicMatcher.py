@@ -4,18 +4,25 @@ import json
 from . import util
 from . import config
 from typing import Union
-from nonebot import on_regex
+from nonebot import on_regex, on_message
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEvent
 
 apiUrl = config.system.music_api
 
-
+debugMatcher = on_message()
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085',
                      priority=1, rule=util.group_checker)
-qqMatcher = on_regex('\[CQ:json.*?"appid":100497308',
+qqMatcher = on_regex('\[CQ:json.*?"appid":(100497308|101944154)',
                      priority=1, rule=util.group_checker)
+
+
+@debugMatcher.handle()
+async def debugfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
+    botid = await util.getID(bot)
+    msg = e.raw_message
+    print(msg)
 
 
 @qqMatcher.handle()
@@ -66,7 +73,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
             id = matchObj.group(1)
         else:
             matchObj = re.search(
-                r'\?id=([0-9]{1,13})', msg, re.M | re.I)
+                r'[^a-zA-Z]id=([0-9]{1,13})', msg, re.M | re.I)
             id = matchObj.group(1)
     except:
         if (config.getVal(botid, 'debug') == 1):

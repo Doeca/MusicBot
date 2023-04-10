@@ -12,6 +12,7 @@ def httpGet(url):
 
 
 def unescape(str: str):
+    str = str.replace("\\/","/")
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
 

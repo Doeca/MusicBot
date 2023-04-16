@@ -42,13 +42,17 @@ function player() {
 
 
                 while (true) {
+                    let stage = 0;
                     try {
                         await operatePlayer();
+                        stage = 1;
                         await loadPlayer();
+                        stage = 2;
                         await sleep(delay);
+
                     } catch (err) {
                         try {
-                            let text = `currentID:${currentID}\nplayStatus:${playStatus}\nerr:${err}`
+                            let text = `botid:${botid}\ncurrentID:${currentID}\nplayStatus:${playStatus}\nerr:${err}\nstage:${stage}`
                             text = window.btoa(text)
                             await fetch(`${apiUrl}/notify?text=${text}`, { mode: "cors" }).catch(err => { })
                         } catch (error) {

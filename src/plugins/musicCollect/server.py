@@ -106,29 +106,31 @@ async def play_id(botid: int, id: int = 1):
         return {"res": '-1'}
     config.setVal(botid, "voteNum", 0)
     config.setVal(botid, "votePeople", list())
-
-    if id >= 10000:
-        v = config.random[id-10000]
-        config.setVal(botid, "currentTitle",
-                      f"{v['name']} - {v['author']}")
-        bot: Bot = get_bot(str(botid))
-        for gid in config.getVal(botid, "groups"):
-            await bot.send_group_msg(group_id=gid,
-                                     message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
-        return v
-
-    orderList = config.getVal(botid, 'orderList')
-    for v in orderList:
-        if (v['id'] == id):
-            v['played'] = 1
-            config.setVal(botid, 'currentID', id)
+    try:
+        if id >= 10000:
+            v = config.random[id-10000]
             config.setVal(botid, "currentTitle",
-                          f"{v['name']} - {v['author']}")
+                        f"{v['name']} - {v['author']}")
             bot: Bot = get_bot(str(botid))
             for gid in config.getVal(botid, "groups"):
                 await bot.send_group_msg(group_id=gid,
-                                         message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
+                                        message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
             return v
+
+        orderList = config.getVal(botid, 'orderList')
+        for v in orderList:
+            if (v['id'] == id):
+                v['played'] = 1
+                config.setVal(botid, 'currentID', id)
+                config.setVal(botid, "currentTitle",
+                            f"{v['name']} - {v['author']}")
+                bot: Bot = get_bot(str(botid))
+                for gid in config.getVal(botid, "groups"):
+                    await bot.send_group_msg(group_id=gid,
+                                            message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
+                return v
+    except:  
+        return {"res": '-1'}
     return {"res": '-1'}
 
 

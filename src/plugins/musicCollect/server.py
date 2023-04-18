@@ -135,7 +135,7 @@ async def play_id(botid: int, id: int = 1):
 
 
 @app.get("/getOperations")
-def get_operations(botid: int):
+async def get_operations(botid: int):
     if (config.getSetting(botid) == None):
         return {"res": '-1'}
     opertaionList = config.getVal(botid, 'opertaionList')

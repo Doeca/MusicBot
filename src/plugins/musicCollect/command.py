@@ -1,4 +1,6 @@
 import json
+import base64
+import requests
 from . import cron
 from . import util
 from . import config
@@ -18,6 +20,8 @@ debugMatcher = on_command("debug", permission=(
 listMatcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=util.group_checker)
 playingMatcher = on_regex(
     '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=util.group_checker)
+ruleMatcher = on_command(
+    "rule", aliases={"规则", "点歌规则"}, rule=util.group_checker)
 
 helpMatcher = on_regex(
     '帮助|\/help', rule=util.group_checker)
@@ -37,6 +41,8 @@ setPriorMatcher = on_command(
 
 volumeMatcher = on_command("volume", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), aliases={"音量"}, rule=util.group_checker)
+
+cookieMatcher = on_command("cookie", permission=SUPERUSER)
 
 
 @blackMatcher.handle()
@@ -219,6 +225,17 @@ async def setPriorhandle(e: Event, bot: Bot):
     await bot.send(e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)
 
 
+@ruleMatcher.handle()
+async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
+    botid = await util.getID(bot)
+    maxPer = config.getVal(botid, "maxPer")
+    set_time = config.getVal(botid, "set_time")
+    time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
+        f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
+    await bot.send(
+        e, f"🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}\n🎧各时段每人最多点{maxPer}首\n🧿支持平台：QQ音乐、网易云音乐", reply_message=True)
+
+
 @debugMatcher.handle()
 async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
     botid = await util.getID(bot)
@@ -301,3 +318,21 @@ async def banID(bot: Bot, e: Event, arg: str = ArgStr('arg')):
     info = await bot.get_stranger_info(user_id=userid)
     name = f"{orderList[id-1]['name']} - {orderList[id-1]['author']}"
     await bot.send(e, f"歌曲《{name}》的点歌人是：{info['nickname']}({userid})", at_sender=True, reply_message=True)
+
+
+@cookieMatcher.handle()
+async def cookieUploadPre(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
+    cookie = args.extract_plain_text().strip()
+    print(cookie)
+    if cookie != '':
+        matcher.set_arg("arg", cookie)
+
+
+@cookieMatcher.got("arg", prompt="请输入cookie文本")
+async def cookieUpload(bot: Bot, e: Event, arg: str = ArgStr('arg')):
+    print(arg)
+    apiUrl = config.system.music_api
+    raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
+    print(f"{apiUrl}/update_cookie?raw={raw}")
+    requests.get(f"{apiUrl}/update_cookie?raw={raw}")
+    await bot.send(e, f"Cookies：{arg}\n已经上传", at_sender=True, reply_message=True)

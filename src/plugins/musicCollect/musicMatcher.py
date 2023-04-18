@@ -11,18 +11,10 @@ from nonebot.adapters.onebot.v11 import Bot, PrivateMessageEvent, GroupMessageEv
 
 apiUrl = config.system.music_api
 
-debugMatcher = on_message()
 wyMatcher = on_regex('\[CQ:json.*?"appid":100495085',
                      priority=1, rule=util.group_checker)
 qqMatcher = on_regex('\[CQ:json.*?"appid":(100497308|101944154)',
                      priority=1, rule=util.group_checker)
-
-
-@debugMatcher.handle()
-async def debugfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, matcher: Matcher):
-    botid = await util.getID(bot)
-    msg = e.raw_message
-    print(msg)
 
 
 @qqMatcher.handle()
@@ -30,8 +22,11 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     matcher.stop_propagation()
     botid = await util.getID(bot)
     status = await util.isRunning(botid)
+    set_time = config.getVal(botid, "set_time")
+    time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
+        f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
     if (status == False):
-        await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await bot.send(e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
     matchObj = re.search(r'"jumpUrl":"(.*?)"&#44;"p', msg, re.M | re.I)
@@ -60,11 +55,13 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     matcher.stop_propagation()
     botid = await util.getID(bot)
     status = await util.isRunning(botid)
+    set_time = config.getVal(botid, "set_time")
+    time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
+        f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
     if (status == False):
-        await bot.send(e, "当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await bot.send(e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
-    # print(msg)
     id = '0'
     try:
         matchObj = re.search(

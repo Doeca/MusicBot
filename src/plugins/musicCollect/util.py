@@ -12,7 +12,7 @@ def httpGet(url):
 
 
 def unescape(str: str):
-    str = str.replace("\\/","/")
+    str = str.replace("\\/", "/")
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
 
@@ -170,3 +170,12 @@ async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: B
     if e.message_type == 'private':
         return True
     return e.group_id in config.getVal(botid, 'groups')
+
+
+def handleTime(s: str):
+    a = s.split(":")
+    if (len(a[0]) == 1):
+        a[0] = '0' + a[0]
+    if (len(a[1]) == 1):
+        a[1] = '0' + a[1]
+    return f'{a[0]}:{a[1]}'

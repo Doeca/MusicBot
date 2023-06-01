@@ -40,16 +40,16 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], match
     await bot.send_private_msg(
         user_id=e.user_id, message=f'请访问以下网址进行bot设置\n{config.system.backend_url}/setting?botid={botid}\n设置完成后发送"/播放地址"获取播放链接')
     if e.message_type == "group":
-        await bot.send(event=e, message="已将相关信息私聊发送给您，请勿将地址发送到群内等公开场合")
+        await util.sendMsg(bot, e, message="已将相关信息私聊发送给您，请勿将地址发送到群内等公开场合")
 
 
 @playlinkMatcher.handle()
 async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], matcher: Matcher):
     botid = await util.getID(bot)
     if (config.getSetting(botid) == None):
-        await bot.send(event=e, message=f'您还未进行初始化设置，请发送"/设置"获取链接进行设置，点击"保存"即可完成设置')
+        await util.sendMsg(bot, e, message=f'您还未进行初始化设置，请发送"/设置"获取链接进行设置，点击"保存"即可完成设置')
         return
     await bot.send_private_msg(
         user_id=e.user_id, message=f'请打开此网页进行歌曲播放\n{config.system.backend_url}/?botid={botid}')
     if e.message_type == "group":
-        await bot.send(event=e, message="已将相关信息私聊发送给您，请勿将地址发送到群内等公开场合")
+        await util.sendMsg(bot, e, message="已将相关信息私聊发送给您，请勿将地址发送到群内等公开场合")

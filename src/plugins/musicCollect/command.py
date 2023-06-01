@@ -47,14 +47,14 @@ cookieMatcher = on_command("cookie", permission=SUPERUSER)
 
 @blackMatcher.handle()
 async def blackhandle(e: Event, bot: Bot):
-    await bot.send(e, util.generateBlack(await util.getID(bot)), at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, util.generateBlack(await util.getID(bot)), at_sender=True, reply_message=True)
 
 
 @nextMatcher.handle()
 async def next(e: Event, bot: Bot):
     botid = await util.getID(bot)
     if (util.currentPlay(botid) == 0):
-        await bot.send(e, "当前没有在播放歌曲哦，无法切歌", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "当前没有在播放歌曲哦，无法切歌", at_sender=True, reply_message=True)
         return
     userid = e.get_user_id()
     perm = (SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
@@ -62,12 +62,12 @@ async def next(e: Event, bot: Bot):
     vote_need = config.getVal(botid, "vote_need", 6)
     if (res == True):
         util.addOperation(await util.getID(bot), 'next')
-        await bot.send(e, "已切换到下一首歌", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "已切换到下一首歌", at_sender=True, reply_message=True)
     else:
         voteNum = config.getVal(botid, "voteNum")
         votePeople: list = config.getVal(botid, "votePeople")
         if (userid in votePeople):
-            await bot.send(e, f"你已经参与过投票了，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
+            await util.sendMsg(bot, e, f"你已经参与过投票了，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
             return
         voteNum += 1
         votePeople.append(userid)
@@ -75,19 +75,19 @@ async def next(e: Event, bot: Bot):
         config.setVal(botid, "votePeople", votePeople)
         if (voteNum >= vote_need):
             util.addOperation(await util.getID(bot), 'next')
-            await bot.send(e, "切歌票数已达标，切换到下一首歌", at_sender=True, reply_message=True)
+            await util.sendMsg(bot, e, "切歌票数已达标，切换到下一首歌", at_sender=True, reply_message=True)
         else:
-            await bot.send(e, f"参与投票切歌成功，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
+            await util.sendMsg(bot, e, f"参与投票切歌成功，当前进度：{voteNum}/{vote_need}", at_sender=True, reply_message=True)
 
 
 @listMatcher.handle()
 async def retList(e: Event, bot: Bot):
-    await bot.send(e, util.generateList(await util.getID(bot)), at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, util.generateList(await util.getID(bot)), at_sender=True, reply_message=True)
 
 
 @playingMatcher.handle()
 async def retList(e: Event, bot: Bot):
-    await bot.send(e, util.generatePlay(await util.getID(bot)), at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, util.generatePlay(await util.getID(bot)), at_sender=True, reply_message=True)
 
 
 @banMatcher.handle()
@@ -157,7 +157,7 @@ async def startOrder(e: Event, bot: Bot):
         config.setVal(botid, 'orderList', json.loads(fp.read()))
         fp.close()
         logger.debug("已载入本地听歌列表")
-        await bot.send(e, "已载入本地听歌列表", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "已载入本地听歌列表", at_sender=True, reply_message=True)
 
 
 @stopMatcher.handle()
@@ -197,17 +197,17 @@ async def banID(bot: Bot, arg: str = ArgStr('arg')):
 async def setPriorhandle(e: Event, bot: Bot):
     botid = await util.getID(bot)
     if (config.getVal(botid, 'orderSwitch') == 0):
-        await bot.send(e, "当前不在点歌时间段内，不能使用该功能哦🥺", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "当前不在点歌时间段内，不能使用该功能哦🥺", at_sender=True, reply_message=True)
         return
     if (config.getVal(botid, 'prioritified') == 1):
-        await bot.send(e, f"很抱歉，该时段已经有人使用过提前播放功能了，不能再次使用😥", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，该时段已经有人使用过提前播放功能了，不能再次使用😥", at_sender=True, reply_message=True)
         return
     qq = int(e.get_user_id())
     res = util.getOrder(botid, qq)
     nameList = util.getSongList(botid, res)
 
     if ('生日快乐' not in nameList):
-        await bot.send(e, f"很抱歉，你点的歌不能提前播放，只有生日快乐歌才能提前播放哦🤧", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，你点的歌不能提前播放，只有生日快乐歌才能提前播放哦🤧", at_sender=True, reply_message=True)
         return
     id = 0
     if (nameList[0].find("生日快乐") != -1):
@@ -215,14 +215,14 @@ async def setPriorhandle(e: Event, bot: Bot):
     else:
         id = res[1]['id']
     if (util.currentPlay(botid) >= id):
-        await bot.send(e, f"很抱歉，此歌已经播放过了，不能重复播放😿", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，此歌已经播放过了，不能重复播放😿", at_sender=True, reply_message=True)
         return
     if (util.currentPlay(botid)+1 == id):
-        await bot.send(e, f"很抱歉，此歌本来就在下一首，无需提前播放😿", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，此歌本来就在下一首，无需提前播放😿", at_sender=True, reply_message=True)
         return
     util.changeOrder(botid, util.currentPlay(botid), id)
     config.setVal(botid, 'orderSwitch', 1)
-    await bot.send(e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, f"你点的生日快乐歌已经提前到下一首播放啦，祝你生日快乐🥳", at_sender=True, reply_message=True)
 
 
 @ruleMatcher.handle()
@@ -232,8 +232,7 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
     set_time = config.getVal(botid, "set_time")
     time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
         f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
-    await bot.send(
-        e, f"🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}\n🎧各时段每人最多点{maxPer}首\n🧿支持平台：QQ音乐、网易云音乐", reply_message=True)
+    await util.sendMsg(bot, e, f"🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}\n🎧各时段每人最多点{maxPer}首\n🧿支持平台：QQ音乐、网易云音乐", reply_message=True)
 
 
 @debugMatcher.handle()
@@ -242,10 +241,10 @@ async def func(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent], match
     matcher.stop_propagation()
     if (config.getVal(botid, 'debug') == 1):
         config.setVal(botid, 'debug', 0)
-        await bot.send(message=f"🤐Turn off debug mode", event=e)
+        await util.sendMsg(bot, e, f"🤐Turn off debug mode")
     else:
         config.setVal(botid, 'debug', 1)
-        await bot.send(message=f"😆Switch to debug mode", event=e)
+        await util.sendMsg(bot, e, message=f"😆Switch to debug mode")
 
 
 @volumeMatcher.handle()
@@ -284,7 +283,7 @@ async def helpHandle(e: Event, bot: Bot):
     fs = open("./help.store", "r")
     text = fs.read()
     fs.close()
-    await bot.send(e, text, at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, text, at_sender=True, reply_message=True)
 
 
 @whoMatcher.handle()
@@ -317,7 +316,7 @@ async def banID(bot: Bot, e: Event, arg: str = ArgStr('arg')):
     userid = orderList[id-1]['uin']
     info = await bot.get_stranger_info(user_id=userid)
     name = f"{orderList[id-1]['name']} - {orderList[id-1]['author']}"
-    await bot.send(e, f"歌曲《{name}》的点歌人是：{info['nickname']}({userid})", at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, f"歌曲《{name}》的点歌人是：{info['nickname']}({userid})", at_sender=True, reply_message=True)
 
 
 @cookieMatcher.handle()
@@ -335,4 +334,4 @@ async def cookieUpload(bot: Bot, e: Event, arg: str = ArgStr('arg')):
     raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
     print(f"{apiUrl}/update_cookie?raw={raw}")
     requests.get(f"{apiUrl}/update_cookie?raw={raw}")
-    await bot.send(e, f"Cookies：{arg}\n已经上传", at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, f"Cookies：{arg}\n已经上传", at_sender=True, reply_message=True)

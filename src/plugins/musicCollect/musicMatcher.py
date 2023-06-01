@@ -26,7 +26,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
         f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
     if (status == False):
-        await bot.send(e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
     matchObj = re.search(r'"jumpUrl":"(.*?)"&#44;"p', msg, re.M | re.I)
@@ -42,7 +42,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
         if (config.getVal(botid, 'debug') == 1):
             logger.debug(resp.text)
             await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nmid:{mid}\nraw msg:{msg}", auto_escape=True)
-        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()
     urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
@@ -59,7 +59,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
     time = [util.handleTime(f"{set_time[0]}:{set_time[1]}"), util.handleTime(
         f"{set_time[4]}:{set_time[5]}"), util.handleTime(f"{set_time[2]}:{set_time[3]}"), util.handleTime(f"{set_time[6]}:{set_time[7]}")]
     if (status == False):
-        await bot.send(e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"当前不在点歌时间段内，不能点歌哦🥺\n🧌点歌时间段：{time[0]}--{time[1]}、{time[2]}--{time[3]}", at_sender=True, reply_message=True)
         return
     msg = e.raw_message
     id = '0'
@@ -76,7 +76,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
         if (config.getVal(botid, 'debug') == 1):
             logger.debug(f"当前id:{id}")
             await bot.send_private_msg(user_id=1124468334, message=f"正则匹配失败，相关日志：\nraw msg:{msg}", auto_escape=True)
-        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     else:
         pass
@@ -86,7 +86,7 @@ async def asyncfunc(e: Union[PrivateMessageEvent, GroupMessageEvent], bot: Bot, 
         if (config.getVal(botid, 'debug') == 1):
             logger.debug(resp.text)
             await bot.send_private_msg(user_id=1124468334, message=f"点歌失败，相关日志：\n{resp.text}\nid:{id}\nraw msg:{msg}", auto_escape=True)
-        await bot.send(e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, "点歌失败，请稍后再试😢", at_sender=True, reply_message=True)
         return
     songInfo = resp.json()
     urls = [songInfo['playUrl'], songInfo['lrcUrl'], songInfo['cover']]
@@ -102,18 +102,18 @@ async def addToList(botid, e: Union[PrivateMessageEvent, GroupMessageEvent], bot
     maxList = config.getVal(botid, 'maxList')
     maxPer = config.getVal(botid, "maxPer")
     if util.isBlack(botid, name):
-        await bot.send(e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"歌曲《{name}》在黑名单中，无法进行点歌🐵", at_sender=True, reply_message=True)
         return
     if ((0 if orderPeople.get(e.user_id) == None else orderPeople[e.user_id]) >= maxPer):
-        await bot.send(e, f"每时段每人限点{maxPer}首，你无法继续点歌🫣", at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"每时段每人限点{maxPer}首，你无法继续点歌🫣", at_sender=True, reply_message=True)
         return
     if len(orderList) >= config.getVal(botid, 'maxList'):
-        await bot.send(e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",
-                       at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，此时段点歌数量已达{maxList}首，无法继续点歌了💦",
+                           at_sender=True, reply_message=True)
         return
     if name in util.getSongList(botid):
-        await bot.send(e, f"很抱歉，《{name}》已经被别人点过了，换首别的歌吧😵",
-                       at_sender=True, reply_message=True)
+        await util.sendMsg(bot, e, f"很抱歉，《{name}》已经被别人点过了，换首别的歌吧😵",
+                           at_sender=True, reply_message=True)
         return
     orderPeople[e.user_id] = (0 if orderPeople.get(
         e.user_id) == None else orderPeople[e.user_id])
@@ -138,4 +138,4 @@ async def addToList(botid, e: Union[PrivateMessageEvent, GroupMessageEvent], bot
     if (tempInfo['id'] >= config.getVal(botid, 'maxList')):
         for gid in config.getVal(botid, "groups"):
             await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
-    await bot.send(e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)
+    await util.sendMsg(bot, e, f"🥳点歌成功，点歌序号：{len(orderList)}/{maxList}", at_sender=True, reply_message=True)

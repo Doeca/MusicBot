@@ -187,7 +187,7 @@ async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_me
     botid = await getID(bot)
     num = waitForSend.get(botid, 0)
     waitForSend.set(botid, num+1)
-    time.sleep()
+    time.sleep(num)
     time.sleep(random.randint(1, 3))
     time.sleep(int(len(message)/20))
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)

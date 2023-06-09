@@ -5,6 +5,7 @@ from . import config
 from typing import Union
 from nonebot.utils import run_sync
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent, Event
+waitForSend = 0
 
 
 @run_sync
@@ -13,9 +14,13 @@ def httpGet(url):
 
 
 async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_message=True):
-    time.sleep(random.randint(1,3))
+    global waitForSend
+    waitForSend += 1
+    time.sleep(waitForSend)
+    time.sleep(random.randint(1, 3))
     time.sleep(int(len(message)/20))
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)
+    waitForSend -= 1
 
 
 def unescape(str: str):

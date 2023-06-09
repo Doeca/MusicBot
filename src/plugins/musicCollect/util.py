@@ -192,4 +192,4 @@ async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_me
     time.sleep(int(len(message)/20))
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)
     num = waitForSend.get(botid)
-    waitForSend.set(botid, num-1)
+    waitForSend[botid] = num-1

@@ -1,6 +1,7 @@
 import time
 import random
 import requests
+import asyncio
 from . import config
 from typing import Union
 from nonebot.utils import run_sync
@@ -182,14 +183,19 @@ def handleTime(s: str):
         a[1] = '0' + a[1]
     return f'{a[0]}:{a[1]}'
 
+lock = asyncio.Lock()
+
 
 async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_message=True):
     botid = await getID(bot)
-    num = waitForSend.get(botid, 0)
     second = random.randint(3, 6)
-    num += second
-    waitForSend[botid] = num
+    async with lock:
+        num = waitForSend.get(botid, 0) + second
+        waitForSend[botid] = num
+
     time.sleep(num)
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)
-    num = waitForSend.get(botid)
-    waitForSend[botid] = num-second
+    
+    async with lock:
+        num = waitForSend.get(botid)
+        waitForSend[botid] = num-second

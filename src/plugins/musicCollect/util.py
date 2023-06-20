@@ -186,7 +186,7 @@ def handleTime(s: str):
 async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_message=True):
     botid = await getID(bot)
     num = waitForSend.get(botid, 0)
-    second = random.randint(1, 3)
+    second = random.randint(3, 6)
     waitForSend[botid] = num+second
     time.sleep(num)
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)

@@ -15,16 +15,19 @@ from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
     botid = await util.getID(bot)
-    if e.message_type == 'private':
-        for i in config.getVal(botid, 'groups'):
-            info = await bot.get_group_member_info(group_id=i, user_id=e.user_id, no_cache=True)
+    try:
+        if e.message_type == 'private':
+            for i in config.getVal(botid, 'groups'):
+                info = await bot.get_group_member_info(group_id=i, user_id=e.user_id, no_cache=True)
+                if info["role"] != 'member':
+                    return True
+            return False
+        else:
+            info = await bot.get_group_member_info(group_id=e.group_id, user_id=e.user_id, no_cache=True)
             if info["role"] != 'member':
                 return True
-        return False
-    else:
-        info = await bot.get_group_member_info(group_id=e.group_id, user_id=e.user_id, no_cache=True)
-        if info["role"] != 'member':
-            return True
+            return False
+    except:
         return False
 
 

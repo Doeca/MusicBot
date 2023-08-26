@@ -3,7 +3,10 @@ from . import command
 from . import cron
 from . import server
 from . import tutorial
+from . import config
+import asyncio
 
+asyncio.run(config.init_config())
 
 """
 初始化流程：

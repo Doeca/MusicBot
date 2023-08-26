@@ -23,7 +23,7 @@ async def run_start_order(id):
     try:
         bot: Bot = get_bot(str(id))
         for gid in config.getVal(id, "groups"):
-            await bot.set_group_card(group_id=gid, user_id=id, card='激情点歌ing 私发/群聊 分享链接 即可点歌')
+            await bot.set_group_card(group_id=gid, user_id=id, card='激情点歌ing 分享链接到群内 即可点歌')
             await bot.send_group_msg(group_id=gid,
                                      message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
     except:

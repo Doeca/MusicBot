@@ -16,8 +16,8 @@ from pydantic import BaseModel, Extra
 2、bot在群内的群名片 cardname
 3、黑名单歌曲列表 bankeywords
 
-时段信息：【数组】
-1、开启时间，关闭时间  starttime,shuttime
+时段信息 timezone【数组】
+1、开启时间，关闭时间  settime
 2、点歌总数量上限  mainlimit
 3、个人点歌数量上限 personlimit
 
@@ -31,9 +31,12 @@ class Config(BaseModel, extra=Extra.ignore):
     bot_id: str
 
 
-load_status = 0
-schoolList = dict()
-schoolSettings = dict()
+load_status = 0 # 当前开启状态
+schoolList = dict() # id -> 学校名称列表
+schoolSettings = dict() # 后端获取的所有原始数据
+schoolInfo = dict() #   当前点歌开启状态、歌单等即时信息，不受初始化流程影响。
+
+
 system = Config.parse_obj(get_driver().config)
 
 fs = open(f"./random.store", 'r')
@@ -47,7 +50,7 @@ async def get_schoolList():
             if (resp.status != 200):
                 return False
             global schoolList
-            schoolList = await resp.json()
+            schoolList: dict = await resp.json()
             return True
 
 
@@ -79,6 +82,8 @@ async def init_config():
 此逻辑下禁止如下行为：
 多个学校ID共用了一个群号，那么就会有问题，所以前端的模板设置里不应该设置真实的群号
 """
+
+
 async def get_ID(gid: str):
     for key in schoolSettings.keys():
         if gid in schoolSettings[key]['groups']:
@@ -89,5 +94,7 @@ async def get_ID(gid: str):
 """
 通过学校ID获取设置信息
 """
+
+
 async def get_config(id: str):
     return schoolSettings.get(id)

@@ -7,6 +7,7 @@ from . import config
 import asyncio
 
 asyncio.run(config.init_config())
+asyncio.run(cron.init_cron())
 
 """
 初始化流程：

@@ -159,12 +159,20 @@ async def isRunning(botid):
         return False
 
 
+"""
+待修改：
+通过群号获取学校ID
+"""
 async def getID(bot: Bot):
     v = await bot.get_login_info()
     while not isinstance(v, dict):
         v = await bot.get_login_info()
     return v['user_id']
 
+
+"""
+待编写：
+"""
 
 async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
     botid = await getID(bot)

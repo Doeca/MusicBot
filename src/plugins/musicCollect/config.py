@@ -17,9 +17,18 @@ from pydantic import BaseModel, Extra
 3、黑名单歌曲列表 bankeywords
 
 时段信息 timezone【数组】
-1、开启时间，关闭时间  settime
+1、开启时间，关闭时间  settime[4]
 2、点歌总数量上限  mainlimit
 3、个人点歌数量上限 personlimit
+
+
+info字段
+
+switch_status 点歌开启状态
+song_list 歌曲列表
+order_users 点歌用户列表
+log_file 存放歌单的文件
+tzinfo 当前时段的相关数据
 
 """
 
@@ -49,7 +58,6 @@ async def get_schoolList():
         async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
             if (resp.status != 200):
                 return False
-            global schoolList
             schoolList: dict = await resp.json()
             return True
 
@@ -89,12 +97,3 @@ async def get_id(gid: str):
         if gid in schoolSettings[key]['groups']:
             return key
     return ''
-
-
-"""
-通过学校ID获取设置信息
-"""
-
-
-async def get_config(id: str):
-    return schoolSettings.get(id)

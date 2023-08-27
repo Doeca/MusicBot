@@ -2,12 +2,12 @@ import time
 import random
 import requests
 import asyncio
+import json
 import aiohttp
 from . import config
 from typing import Union
-from nonebot.utils import run_sync
+from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent, Event
-waitForSend = dict()
 
 
 async def httpGet(url):
@@ -15,151 +15,93 @@ async def httpGet(url):
         async with session.get(url) as resp:
             return resp
 
+
 async def get_realurl(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, allow_redirects=False) as resp:
-            return resp
+            return resp.headers.get('Location', '')
 
 
-def unescape(str: str):
-    str = str.replace("\\/", "/")
-    return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
+async def group_checker(e: GroupMessageEvent) -> bool:
+    if (config.get_id(e.group_id) == ''):
+        return False
+    return True
 
 
-def currentPlay(id):
-    return config.getVal(id, 'currentID')
-
-
-def generateList(id):
-    orderList = config.getVal(id, 'orderList')
-    length = len(orderList)
-    res = '🗒歌曲列表（🅿️正在播放）：'
-    id = currentPlay(id)
-    if length == 0:
-        return '😗当前歌曲列表为🈳️'
-    else:
-        for v in orderList:
-            res += "\n"
-            if v['id'] == id:
-                res += '🅿️'
-            elif (v['played'] == 1):
-                res += '✅'
-            else:
-                res += '💮'
-            res += f"No.{v['id']} {v['name']} - {v['author']}"
-        return res
-
-
-def addOperation(id, type: str, para=0):
-    opertaionList = config.getVal(id, 'opertaionList')
-    temp = dict()
-    temp['type'] = type
-    temp['para'] = para
-    opertaionList.append(temp)
-
-
-def generatePlay(id):
-    title = config.getVal(id, 'currentTitle')
-    if (title == ""):
-        return '👁‍🗨当前没有在播放歌曲'
-    return f"🅿️当前歌曲【{title}】"
-
-
-def generateBlack(id):
-    blackList = config.getVal(id, 'blackList')
-    length = len(blackList)
-    res = '📄歌曲黑名单：\n'
-    i = 0
-    for v in blackList:
-        res += f"《{v}》"
-        if i != length - 1:
-            res += "，"
-        i += 1
-    if i == 0:
-        res += "🈚️任何歌曲"
-
-    blackKeyList = config.getVal(id, 'blackKeyList')
-    length = len(blackKeyList)
-    res += '\n关键词列表：\n'
-    j = 0
-    for v in blackKeyList:
-        res += f"'{v}'"
-        if j != length - 1:
-            res += "，"
-        j += 1
-    if j == 0:
-        res += "🈚️任何关键词\n"
-    return res
-
-
-def isBlack(id, name: str):
-    blackList = config.getVal(id, 'blackList')
-    blackKeyList = config.getVal(id, 'blackKeyList')
-    if name in blackList:
-        return True
-    for v in blackKeyList:
-        if name.find(v) != -1:
+async def is_black(school_id: str, name: str):
+    setting: dict = config.schoolSettings[school_id]
+    bankeywords: list = setting.get('bankeywords', [])
+    for word in bankeywords:
+        if name.find(word) != -1:
             return True
     return False
 
 
-def getSongList(id, ex=None):
+async def get_switch(school_id: str):
+    # 获取当前点歌状态
     """
-    获取歌名列表，若传入ex则返回ex的歌名列表（配合获取指定人歌单）
+    通过schoolid尝试获取schoolInfo，然后get switch_status，如果开启则直接返回开启
+    否则去读取学校设置，判断是否在某个时间段里，如果在就执行cron的开启点歌计划
     """
-    songList = list()
-    if (ex == None):
-        orderList = config.getVal(id, 'orderList')
-    else:
-        orderList = ex
-    for v in orderList:
-        songList.append(v['name'])
-    return songList
-
-
-def getOrder(id, qq: int):
-    """
-    根据QQ获取其所点的所有歌曲
-    """
-    songList = list()
-    orderList = config.getVal(id, 'orderList')
-    for v in orderList:
-        if (v['uin'] == qq):
-            songList.append(v)
-    return songList
-
-
-async def isRunning(botid):
-    status = config.getVal(botid, 'orderSwitch')
-    ntime = int(time.strftime("%H", time.localtime()))*60 + \
-        int(time.strftime("%M", time.localtime()))
-    set_time = config.getVal(botid, 'set_time')
-    amStart = set_time[0] * 60 + set_time[1]
-    pmStart = set_time[2] * 60 + set_time[3]
-    amStop = set_time[4] * 60 + set_time[5]
-    pmStop = set_time[6] * 60 + set_time[7]
-
-    # 点歌时间段内会自动开启，点歌时间段外不能自动关闭
-    if ((amStart < ntime and ntime < amStop) or (pmStart < ntime and ntime < pmStop)):
-        if (status != 1):
-            from . import cron
-            await cron.run_start_order(botid)
+    info: dict = config.schoolInfo.get(school_id, {})
+    if (info.get('switch_status，如果开启则直接返回开启', 0) == 1):
         return True
-    else:
-        if (status == 1):
+
+    setting: dict = config.schoolSettings[school_id]
+    now_time = int(time.strftime("%H", time.localtime()))*60 + \
+        int(time.strftime("%M", time.localtime()))
+
+    # 点歌时间段内会自动开启，点歌时间段外不能自动关闭，防止手动开启点歌等情况
+    for tzinfo in setting['timezone']:
+        set_time = tzinfo['settime']
+        minute_start = set_time[0] * 60 + set_time[1]
+        minute_stop = set_time[2] * 60 + set_time[3]
+        if (minute_start < now_time and now_time < minute_stop):
+            from . import cron
+            await cron.run_start_order(school_id, tzinfo)
             return True
-        return False
+    return False
 
 
-def handleTime(s: str):
-    a = s.split(":")
-    if (len(a[0]) == 1):
-        a[0] = '0' + a[0]
-    if (len(a[1]) == 1):
-        a[1] = '0' + a[1]
-    return f'{a[0]}:{a[1]}'
+async def addTolist(school_id: str, songid: str, type: str, user_id: int):
+    apiUrl = config.system.music_api
+    resp = await httpGet(f"{apiUrl}/{type}/detail?id={songid}")
+    if resp.status != 200:
+        return {'code': -1, "msg": "点歌失败，请稍后再试😢"}
+    res: dict = await resp.json()
+    if is_black(school_id, res['name']):
+        return {'code': -2, "msg": f"歌曲《{res['name']}》在黑名单中，无法进行点歌🐵"}
 
+    info: dict = config.schoolInfo.get(school_id, {})
+    song_list: list = info.get('song_list', [])
+    order_users: dict = info.get('order_users', {})
+    if (order_users.get(user_id, 0) >= info['tzinfo']['personlimit']):
+        return {'code': -3, "msg": f"该时段每人限点{info['tzinfo']['personlimit']}首，你无法继续点歌🫣"}
+    if (len(song_list) >= info['tzinfo']['mainlimit']):
+        return {'code': -4, "msg": f"很抱歉，此时段点歌数量已达{info['tzinfo']['mainlimit']}首，无法继续点歌了💦"}
 
-lock = asyncio.Lock()
+    info['order_users'][user_id] = order_users.get(user_id, 0) + 1
+    song_info = {
+        "name": res['name'],
+        "author": res['author'],
+        "playUrl": res['playUrl'],
+        "lrcUrl": res['lrcUrl'],
+        "cover": res['cover'],
+        "played": 0,
+        "id": len(song_list) + 1,
+        "uin": user_id
+    }
+    song_list.append(song_info)
 
+    fs = open(f"./store/{info['log_file']}", "w")
+    fs.write(json.dumps(info))
+    fs.close()
 
+    if song_info['id'] >= info['tzinfo']['mainlimit']:
+        botid = config.system.bot_id
+        bot: Bot = get_bot(str(botid))
+        setting: dict = config.schoolSettings[school_id]
+        for gid in setting['groups']:
+            await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
+
+    return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}

@@ -14,7 +14,7 @@ cronList = list()
 
 
 async def run_start_order(school_id, tzinfo: dict):
-    info: dict = config.schoolInfo.get(school_id)
+    info: dict = config.schoolInfo.get(school_id, {})
     setting: dict = config.schoolSettings[school_id]
 
     if (info.get("switch_status", 0) == 1):
@@ -23,16 +23,21 @@ async def run_start_order(school_id, tzinfo: dict):
     set_time = tzinfo['settime']
     date_r = time.strftime(f"%m_%d", time.localtime())
     log_file = f"{date_r}_{set_time[0]}_{set_time[1]}.log"
-    config.schoolInfo[school_id]['switch_status'] = 1
-    config.schoolInfo[school_id]['log_file'] = log_file
-    config.schoolInfo[school_id]['tzinfo'] = tzinfo
-    config.schoolInfo[school_id]['setting'] = setting
-    """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复点歌歌单，再进行当前用户的点歌操作"""
+
+    
+    """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复info信息，再进行当前用户的点歌操作"""
     if os.path.exists(f"./store/{log_file}"):
-        fs = open(f"./store/{log_file}")
-        song_list = json.loads(fs.read())
-        config.schoolInfo[school_id]['song_list'] = song_list
+        fs = open(f"./store/{log_file}","r")
+        config.schoolInfo[school_id]= json.loads(fs.read())
         fs.close()
+    else:
+        config.schoolInfo[school_id] = {}
+        config.schoolInfo[school_id]['switch_status'] = 1
+        config.schoolInfo[school_id]['log_file'] = log_file
+        config.schoolInfo[school_id]['tzinfo'] = tzinfo
+        config.schoolInfo[school_id]['song_list'] = list()
+        config.schoolInfo[school_id]['order_users'] = dict()
+
     try:
         botid = config.system.bot_id
         bot: Bot = get_bot(str(botid))
@@ -77,8 +82,8 @@ async def init_cron():
 
     # 为每个学校创建定时任务
     for id in config.schoolList.keys():
-        school_config = config.get_config(id)
-        for tzinfo in school_config['timezone']:
+        setting = config.schoolSettings[id]
+        for tzinfo in setting['timezone']:
             set_time = tzinfo['settime']
 
             # 传递当前时段的设置信息给启动任务

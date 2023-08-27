@@ -2,6 +2,7 @@
 from . import config
 from typing import Union
 from nonebot import on_regex, on_message
+from nonebot.params import RegexGroup
 
 """
 网易云匹配器
@@ -21,3 +22,4 @@ from nonebot import on_regex, on_message
 
 
 link_1 = on_regex('http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}')
+link_2 = on_regex('http(s|).*?music\.163\.com.*?&amp;id=([0-9]{1,})')

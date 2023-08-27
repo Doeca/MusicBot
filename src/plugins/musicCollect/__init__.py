@@ -1,9 +1,8 @@
-from . import musicMatcher
-from . import command
-from . import cron
+from . import commandq
 from . import server
 from . import tutorial
 from . import config
+from . import cron
 import asyncio
 
 asyncio.run(config.init_config())

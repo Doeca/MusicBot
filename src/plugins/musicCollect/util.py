@@ -2,6 +2,7 @@ import time
 import random
 import requests
 import asyncio
+import aiohttp
 from . import config
 from typing import Union
 from nonebot.utils import run_sync
@@ -9,9 +10,15 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEv
 waitForSend = dict()
 
 
-@run_sync
-def httpGet(url):
-    return requests.get(url)
+async def httpGet(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            return resp
+
+async def get_realurl(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, allow_redirects=False) as resp:
+            return resp
 
 
 def unescape(str: str):
@@ -122,21 +129,6 @@ def getOrder(id, qq: int):
     return songList
 
 
-def changeOrder(id, fir: int, sec: int):
-    orderList = config.getVal(id, 'orderList')[:]
-    rawList: list = config.getVal(id, 'orderList')
-    sec_data = orderList[sec-1]
-
-    rawList.pop(sec-1)
-    rawList.insert(fir, sec_data)
-
-    sid = 1
-    for v in rawList:
-        v['id'] = sid
-        sid = sid + 1
-    return True
-
-
 async def isRunning(botid):
     status = config.getVal(botid, 'orderSwitch')
     ntime = int(time.strftime("%H", time.localtime()))*60 + \
@@ -159,30 +151,6 @@ async def isRunning(botid):
         return False
 
 
-"""
-待修改：
-通过群号获取学校ID
-"""
-async def getID(bot: Bot):
-    v = await bot.get_login_info()
-    while not isinstance(v, dict):
-        v = await bot.get_login_info()
-    return v['user_id']
-
-
-"""
-待编写：
-"""
-
-async def group_checker(e: Union[GroupMessageEvent, PrivateMessageEvent], bot: Bot) -> bool:
-    botid = await getID(bot)
-    if (config.getSetting(botid) == None):
-        return False
-    if e.message_type == 'private':
-        return True
-    return e.group_id in config.getVal(botid, 'groups')
-
-
 def handleTime(s: str):
     a = s.split(":")
     if (len(a[0]) == 1):
@@ -191,19 +159,7 @@ def handleTime(s: str):
         a[1] = '0' + a[1]
     return f'{a[0]}:{a[1]}'
 
+
 lock = asyncio.Lock()
 
 
-async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_message=True):
-    botid = await getID(bot)
-    second = random.randint(3, 6)
-    async with lock:
-        num = waitForSend.get(botid, 0) + second
-        waitForSend[botid] = num
-
-    time.sleep(num)
-    await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)
-    
-    async with lock:
-        num = waitForSend.get(botid)
-        waitForSend[botid] = num-second

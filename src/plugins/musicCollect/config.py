@@ -84,7 +84,7 @@ async def init_config():
 """
 
 
-async def get_ID(gid: str):
+async def get_id(gid: str):
     for key in schoolSettings.keys():
         if gid in schoolSettings[key]['groups']:
             return key

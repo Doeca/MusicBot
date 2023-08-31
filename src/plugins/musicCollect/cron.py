@@ -24,12 +24,14 @@ async def run_start_order(school_id, tzinfo: dict):
     date_r = time.strftime(f"%m_%d", time.localtime())
     log_file = f"{date_r}_{set_time[0]}_{set_time[1]}.log"
 
-    
     """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复info信息，再进行当前用户的点歌操作"""
     if os.path.exists(f"./store/{log_file}"):
-        fs = open(f"./store/{log_file}","r")
-        config.schoolInfo[school_id]= json.loads(fs.read())
+        fs = open(f"./store/{log_file}", "r")
+        config.schoolInfo[school_id] = json.loads(fs.read())
+        print(config.schoolInfo[school_id])
         fs.close()
+        logger.info("从异常数据丢失中恢复，已加载数据")
+        return
     else:
         config.schoolInfo[school_id] = {}
         config.schoolInfo[school_id]['switch_status'] = 1
@@ -38,15 +40,12 @@ async def run_start_order(school_id, tzinfo: dict):
         config.schoolInfo[school_id]['song_list'] = list()
         config.schoolInfo[school_id]['order_users'] = dict()
 
-    try:
-        botid = config.system.bot_id
-        bot: Bot = get_bot(str(botid))
-        for gid in setting['groups']:
-            await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
-            await bot.send_group_msg(group_id=gid,
-                                     message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
-    except:
-        pass
+    botid = config.system.bot_id
+    bot: Bot = get_bot(botid)
+    for gid in setting['groups']:
+        await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
+        await bot.send_group_msg(group_id=gid,
+                                 message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
 
     logger.info(f"{school_id} 点歌开启，日志文件：./store/{log_file}")
 
@@ -97,4 +96,4 @@ async def init_cron():
                               hour=set_time[2], minute=set_time[3], id=f"{jobs_id}",  args=[id])
             cronList.append(jobs_id)
 
-        logger.info(f"学校：{id} 启动完毕")
+        logger.info(f"学校：{id} 定时任务启动完毕")

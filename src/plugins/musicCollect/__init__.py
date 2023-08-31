@@ -1,5 +1,6 @@
 from . import config
 from . import cron
+from . import matcher_netease
 import asyncio
 
 asyncio.run(config.init_config())

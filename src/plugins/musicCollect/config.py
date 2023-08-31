@@ -58,7 +58,8 @@ async def get_schoolList():
         async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
             if (resp.status != 200):
                 return False
-            schoolList: dict = await resp.json()
+            global schoolList
+            schoolList = await resp.json()
             return True
 
 

@@ -13,7 +13,11 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEv
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
-            return resp
+            if resp.status == 200:  # Check if the response status is OK
+                data = await resp.text()  # Parse JSON from the response
+                return data
+            else:
+                return None
 
 
 async def get_realurl(url):
@@ -44,9 +48,10 @@ async def get_switch(school_id: str):
     否则去读取学校设置，判断是否在某个时间段里，如果在就执行cron的开启点歌计划
     """
     info: dict = config.schoolInfo.get(school_id, {})
-    if (info.get('switch_status，如果开启则直接返回开启', 0) == 1):
+    if (info.get('switch_status', 0) == 1):
         return True
-
+    # print("学校id", school_id)
+    # print(config.schoolSettings)
     setting: dict = config.schoolSettings[school_id]
     now_time = int(time.strftime("%H", time.localtime()))*60 + \
         int(time.strftime("%M", time.localtime()))
@@ -62,40 +67,48 @@ async def get_switch(school_id: str):
             return True
     return False
 
+lock = asyncio.Lock()
+
 
 async def addTolist(school_id: str, songid: str, type: str, user_id: int):
+    """
+    点歌实际处理逻辑，将数据添加到info中，type选填wy或qq
+    """
     apiUrl = config.system.music_api
     resp = await httpGet(f"{apiUrl}/{type}/detail?id={songid}")
-    if resp.status != 200:
+    if resp == None:
         return {'code': -1, "msg": "点歌失败，请稍后再试😢"}
-    res: dict = await resp.json()
-    if is_black(school_id, res['name']):
+
+    res: dict = json.loads(resp)
+    black = await is_black(school_id, res['name'])
+    if black:
         return {'code': -2, "msg": f"歌曲《{res['name']}》在黑名单中，无法进行点歌🐵"}
 
     info: dict = config.schoolInfo.get(school_id, {})
     song_list: list = info.get('song_list', [])
     order_users: dict = info.get('order_users', {})
-    if (order_users.get(user_id, 0) >= info['tzinfo']['personlimit']):
+    print(order_users)
+    if (order_users.get(f"user{user_id}", 0) >= info['tzinfo']['personlimit']):
         return {'code': -3, "msg": f"该时段每人限点{info['tzinfo']['personlimit']}首，你无法继续点歌🫣"}
     if (len(song_list) >= info['tzinfo']['mainlimit']):
         return {'code': -4, "msg": f"很抱歉，此时段点歌数量已达{info['tzinfo']['mainlimit']}首，无法继续点歌了💦"}
 
-    info['order_users'][user_id] = order_users.get(user_id, 0) + 1
-    song_info = {
-        "name": res['name'],
-        "author": res['author'],
-        "playUrl": res['playUrl'],
-        "lrcUrl": res['lrcUrl'],
-        "cover": res['cover'],
-        "played": 0,
-        "id": len(song_list) + 1,
-        "uin": user_id
-    }
-    song_list.append(song_info)
-
-    fs = open(f"./store/{info['log_file']}", "w")
-    fs.write(json.dumps(info))
-    fs.close()
+    async with lock:
+        info['order_users'][f"user{user_id}"] = order_users.get(f"user{user_id}", 0) + 1
+        song_info = {
+            "name": res['name'],
+            "author": res['author'],
+            "playUrl": res['playUrl'],
+            "lrcUrl": res['lrcUrl'],
+            "cover": res['cover'],
+            "played": 0,
+            "id": len(song_list) + 1,
+            "uin": user_id
+        }
+        song_list.append(song_info)
+        fs = open(f"./store/{info['log_file']}", "w")
+        fs.write(json.dumps(info))
+        fs.close()
 
     if song_info['id'] >= info['tzinfo']['mainlimit']:
         botid = config.system.bot_id

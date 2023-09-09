@@ -187,15 +187,4 @@ lock = asyncio.Lock()
 
 
 async def sendMsg(bot: Bot, event: Event, message: str, at_sender=True, reply_message=True):
-    botid = await getID(bot)
-    second = random.randint(3, 6)
-    async with lock:
-        num = waitForSend.get(botid, 0) + second
-        waitForSend[botid] = num
-
-    time.sleep(num)
     await bot.send(event, message, at_sender=at_sender, reply_message=reply_message)
-    
-    async with lock:
-        num = waitForSend.get(botid)
-        waitForSend[botid] = num-second

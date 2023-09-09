@@ -1,13 +1,12 @@
 import time
+import datetime
 import random
-import requests
 import asyncio
 import json
 import aiohttp
 from . import config
-from typing import Union
 from nonebot import get_bot
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent, Event
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
 
 
 async def httpGet(url):
@@ -55,13 +54,14 @@ async def get_switch(school_id: str):
     setting: dict = config.schoolSettings[school_id]
     now_time = int(time.strftime("%H", time.localtime()))*60 + \
         int(time.strftime("%M", time.localtime()))
+    weekday_number = datetime.date.today().weekday()
 
     # 点歌时间段内会自动开启，点歌时间段外不能自动关闭，防止手动开启点歌等情况
     for tzinfo in setting['timezone']:
         set_time = tzinfo['settime']
         minute_start = set_time[0] * 60 + set_time[1]
         minute_stop = set_time[2] * 60 + set_time[3]
-        if (minute_start < now_time and now_time < minute_stop):
+        if (minute_start < now_time and now_time < minute_stop and weekday_number in tzinfo['setdate']):
             from . import cron
             await cron.run_start_order(school_id, tzinfo)
             return True
@@ -94,7 +94,8 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
         return {'code': -4, "msg": f"很抱歉，此时段点歌数量已达{info['tzinfo']['mainlimit']}首，无法继续点歌了💦"}
 
     async with lock:
-        info['order_users'][f"user{user_id}"] = order_users.get(f"user{user_id}", 0) + 1
+        info['order_users'][f"user{user_id}"] = order_users.get(
+            f"user{user_id}", 0) + 1
         song_info = {
             "name": res['name'],
             "author": res['author'],

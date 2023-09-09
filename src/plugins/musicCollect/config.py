@@ -18,6 +18,7 @@ from pydantic import BaseModel, Extra
 
 时段信息 timezone【数组】
 1、开启时间，关闭时间  settime[4]
+2、开启日期 setdate [1,2,3,4,5,6,7]
 2、点歌总数量上限  mainlimit
 3、个人点歌数量上限 personlimit
 

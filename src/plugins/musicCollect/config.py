@@ -32,6 +32,7 @@ log_file 存放歌单的文件
 tzinfo 当前时段的相关数据
 vote_num 投票切歌人数
 vote_list list 参与投票切歌的qq号
+operation_list 针对播放器的操作列表
 """
 
 
@@ -57,24 +58,33 @@ fs.close()
 
 
 async def get_schoolList():
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
-            if (resp.status != 200):
-                return False
-            global schoolList
-            schoolList = await resp.json()
-            return True
+    # async with aiohttp.ClientSession() as session:
+    #     async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
+    #         if (resp.status != 200):
+    #             return False
+    #         global schoolList
+    #         schoolList = await resp.json()
+    #         return True
+    fs = open("./config/list.json")
+    global schoolList
+    schoolList = json.loads(fs.read())
+    fs.close()
+    return True
 
 
 async def get_schoolSettings():
-    async with aiohttp.ClientSession() as session:
-        for val in schoolList.keys():
-            async with session.get(f"{system.setting_domain}/get", params={'q': 'schoolSettings', 'id': val}) as resp:
-                if (resp.status != 200):
-                    return False
-                tmp = await resp.json()
-                schoolSettings[val] = tmp
-                return True
+    # async with aiohttp.ClientSession() as session:
+    #     for val in schoolList.keys():
+    #         async with session.get(f"{system.setting_domain}/get", params={'q': 'schoolSettings', 'id': val}) as resp:
+    #             if (resp.status != 200):
+    #                 return False
+    #             tmp = await resp.json()
+    #             schoolSettings[val] = tmp
+    #             return True
+    for val in schoolList.keys():
+        fs = open(f"./config/{val}.json")
+        schoolSettings[val] = json.loads(fs.read())
+        fs.close()
 
 
 async def init_config():

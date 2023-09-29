@@ -30,7 +30,7 @@ async def group_checker(e: GroupMessageEvent) -> bool:
         return False
     return True
 
-
+# 检查歌曲名中是否有违禁词
 async def is_black(school_id: str, name: str):
     setting: dict = config.schoolSettings[school_id]
     bankeywords: list = setting.get('bankeywords', [])

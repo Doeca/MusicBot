@@ -21,6 +21,44 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+templates = Jinja2Templates(directory="./src/plugins/musicCollect/template")
+app.mount(
+    "/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
+
+
+@app.get("/")
+async def ret_page(request: Request, school_id: int):
+    if (config.schoolSettings.get(school_id, None) == None):
+        return {"res": '-1'}
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "school_id": school_id
+        }
+    )
+
+
+@app.get("/landing.html")
+async def ret_page(request: Request):
+    return templates.TemplateResponse(
+        "landing.html",
+        {
+            "request": request
+        }
+    )
+
+
+@app.get("/config.js")
+async def ret_page(request: Request, school_id: str):
+    return templates.TemplateResponse(
+        "config.js",
+        {
+            "request": request,
+            "apiUrl": config.system.backend_url,
+            "school_id": school_id
+        }
+    )
 
 
 # 获取最新播放的歌曲ID
@@ -39,12 +77,14 @@ async def read_id(school_id: str):
     return {"res": id + 10000}
 
 # 获取歌曲播放数据
+
+
 @app.get("/getPlayInfo")
 async def play_id(school_id: int, id: int = 1):
     info = config.schoolInfo.get(school_id, None)
     if (info == None):
         return {"res": '-1'}
-    
+
     # 读取必要设置
     setting: dict = config.schoolSettings[school_id]
     botid = config.system.bot_id
@@ -52,12 +92,11 @@ async def play_id(school_id: int, id: int = 1):
     info['vote_num'] = 0
     info['vote_list'] = list()
 
-
     try:
         if id >= 10000:
             v = config.random[id-10000]
             info["current_song_title"] = f"{v['name']} - {v['author']}"
-            
+
             bot: Bot = get_bot(botid)
             for gid in setting['groups']:
                 await bot.send_group_msg(group_id=gid, message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
@@ -84,6 +123,19 @@ async def play_id(school_id: int, id: int = 1):
     return {"res": '-1'}
 
 
+@app.get("/getOperations")
+async def get_operations(school_id: str):
+    info = config.schoolInfo.get(school_id, None)
+    if (info == None):
+        return {"res": '-1'}
+
+    opertaionList = info['opertaion_list']
+    res = opertaionList[:]
+    opertaionList.clear()
+    return res
+
+
+# 通知接口，可通过此接口向我发送通知
 @app.get("/notify")
 async def get_operations(text: str):
     botid = config.system.bot_id

@@ -1,4 +1,5 @@
 import time
+import datetime
 import random
 import os
 import json
@@ -19,9 +20,16 @@ async def run_start_order(school_id, tzinfo: dict):
 
     if (info.get("switch_status", 0) == 1):
         return
+    
+    # 判断当前星期数是否在设置日期中
+    weekday_number = datetime.date.today().weekday() + 1
+    if (weekday_number not in tzinfo['setdate']):
+        return
 
     set_time = tzinfo['settime']
     date_r = time.strftime(f"%m_%d", time.localtime())
+    # 缓存文件名：日期 月_日_设置时_设置分.log
+    # 即只要开启时间不变便可续读此时段的已点歌信息
     log_file = f"{date_r}_{set_time[0]}_{set_time[1]}.log"
 
     """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复info信息，再进行当前用户的点歌操作"""
@@ -39,7 +47,10 @@ async def run_start_order(school_id, tzinfo: dict):
         config.schoolInfo[school_id]['tzinfo'] = tzinfo
         config.schoolInfo[school_id]['song_list'] = list()
         config.schoolInfo[school_id]['order_users'] = dict()
-
+        config.schoolInfo[school_id]['vote_num'] = 0
+        config.schoolInfo[school_id]['vote_list'] = list()
+        config.schoolInfo[school_id]['operation_list'] = list()
+        
     botid = config.system.bot_id
     bot: Bot = get_bot(botid)
     for gid in setting['groups']:

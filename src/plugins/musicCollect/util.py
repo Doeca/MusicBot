@@ -54,7 +54,7 @@ async def get_switch(school_id: str):
     setting: dict = config.schoolSettings[school_id]
     now_time = int(time.strftime("%H", time.localtime()))*60 + \
         int(time.strftime("%M", time.localtime()))
-    weekday_number = datetime.date.today().weekday()
+    weekday_number = datetime.date.today().weekday() + 1
 
     # 点歌时间段内会自动开启，点歌时间段外不能自动关闭，防止手动开启点歌等情况
     for tzinfo in setting['timezone']:
@@ -66,8 +66,6 @@ async def get_switch(school_id: str):
             await cron.run_start_order(school_id, tzinfo)
             return True
     return False
-
-lock = asyncio.Lock()
 
 
 async def addTolist(school_id: str, songid: str, type: str, user_id: int):
@@ -93,7 +91,7 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
     if (len(song_list) >= info['tzinfo']['mainlimit']):
         return {'code': -4, "msg": f"很抱歉，此时段点歌数量已达{info['tzinfo']['mainlimit']}首，无法继续点歌了💦"}
 
-    async with lock:
+    async with config.lock:
         info['order_users'][f"user{user_id}"] = order_users.get(
             f"user{user_id}", 0) + 1
         song_info = {

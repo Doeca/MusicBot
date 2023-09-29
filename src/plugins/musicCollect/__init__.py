@@ -1,6 +1,9 @@
 from . import config
 from . import cron
 from . import matcher_netease
+from . import matcher_qq
+from . import outer_api
+from . import command_user
 import asyncio
 
 asyncio.run(config.init_config())

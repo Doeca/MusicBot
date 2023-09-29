@@ -1,13 +1,15 @@
 import time
 import datetime
-import random
-import asyncio
 import json
 import aiohttp
 from . import config
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
 
+
+def unescape(str: str):
+    str = str.replace("\\/", "/")
+    return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
@@ -26,11 +28,15 @@ async def get_realurl(url):
 
 
 async def group_checker(e: GroupMessageEvent) -> bool:
-    if (config.get_id(e.group_id) == ''):
+    school_id = await config.get_id(str(e.group_id))
+    if (school_id == ''):
         return False
-    return True
+    res = await get_switch(school_id)
+    return res
 
 # 检查歌曲名中是否有违禁词
+
+
 async def is_black(school_id: str, name: str):
     setting: dict = config.schoolSettings[school_id]
     bankeywords: list = setting.get('bankeywords', [])
@@ -105,7 +111,7 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
             "uin": user_id
         }
         song_list.append(song_info)
-        fs = open(f"./store/{info['log_file']}", "w")
+        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
         fs.write(json.dumps(info))
         fs.close()
 
@@ -117,3 +123,48 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
             await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
 
     return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}
+
+# 生成歌单
+
+
+async def generateSongList(school_id):
+    info = config.schoolInfo.get(school_id, None)
+    song_list = info['song_list']
+    length = len(song_list)
+    res = '🗒歌曲列表（🅿️正在播放）：'
+    id = info['current_song_id']
+    if length == 0:
+        return '😗当前歌曲列表为🈳️'
+    else:
+        for v in song_list:
+            res += "\n"
+            if v['id'] == id:
+                res += '🅿️'
+            elif (v['played'] == 1):
+                res += '✅'
+            else:
+                res += '💮'
+            res += f"No.{v['id']} {v['name']} - {v['author']}"
+        return res
+
+
+# 将操作加入操作列表
+async def addOperation(school_id, type: str, para=0):
+    async with config.lock:
+        info = config.schoolInfo.get(school_id, None)
+        if (info == None):
+            return
+        info['operation_list'].append({"type": type, "para": para})
+        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+        fs.write(json.dumps(info))
+        fs.close()
+
+
+# 处理时间的显示格式
+def handleTime(s: str):
+    a = s.split(":")
+    if (len(a[0]) == 1):
+        a[0] = '0' + a[0]
+    if (len(a[1]) == 1):
+        a[1] = '0' + a[1]
+    return f'{a[0]}:{a[1]}'

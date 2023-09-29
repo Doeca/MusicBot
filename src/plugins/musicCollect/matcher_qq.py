@@ -26,27 +26,25 @@ from nonebot.log import logger
 """
 
 link_1 = on_regex(
-    'http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}', rule=util.group_checker)
+    'https:\/\/c6.y.qq.com\/base\/fcgi-bin\/u\?__=([a-zA-Z0-9]{10,15})', rule=util.group_checker)
 link_2 = on_regex(
-    'http(s|).*?music\.163\.com.*?&amp;id=([0-9]{1,})', rule=util.group_checker)
-
+    '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre', rule=util.group_checker)
 
 
 
 @link_1.handle()
 async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
     school_id = await config.get_id(str(e.group_id))
-    if util.get_switch(school_id) == False:
+    status = await util.get_switch(school_id)
+    if status == False:
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
-
-    real_link = await util.get_realurl(link)
-    matches = re.search('&id=([0-9]{1,})', real_link)
-    if (matches == None):
-        return
-    songid = matches.group(1)
-    res = await util.addTolist(school_id, songid, 'wy', e.user_id)
+    resp = await util.httpGet(link)
+    matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
+    songmid = matchObj.group(1)
+    res = await util.addTolist(school_id, songmid, 'qq', e.user_id)
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+
 
 
 @link_2.handle()
@@ -56,9 +54,12 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
     if status == False:
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
-    songid = link[1]
-    res = await util.addTolist(school_id, songid, 'wy', e.user_id)
+    rawlink = link[0]
+    rawlink = util.unescape(rawlink)
+    resp = await util.httpGet(rawlink)
+    matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
+    songmid = matchObj.group(1)
+    res = await util.addTolist(school_id, songmid, 'qq', e.user_id)
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
-
-logger.info("网易云音乐监听器创建完成")
+logger.info("QQ音乐监听器创建完成")

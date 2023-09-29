@@ -21,6 +21,7 @@ import asyncio
 2、开启日期 setdate [1,2,3,4,5,6,7]
 2、点歌总数量上限  mainlimit
 3、个人点歌数量上限 personlimit
+4、投票切割所需票数 voteneed
 
 
 info字段
@@ -33,6 +34,8 @@ tzinfo 当前时段的相关数据
 vote_num 投票切歌人数
 vote_list list 参与投票切歌的qq号
 operation_list 针对播放器的操作列表
+current_song_id 当前播放的歌单中的歌曲id
+current_song_title 当前播放的歌曲名
 """
 
 
@@ -106,7 +109,7 @@ async def init_config():
 """
 
 
-async def get_id(gid: str):
+async def get_id(gid: int):
     for key in schoolSettings.keys():
         if gid in schoolSettings[key]['groups']:
             return key

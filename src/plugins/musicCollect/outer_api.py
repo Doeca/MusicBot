@@ -5,6 +5,7 @@ import nonebot
 from . import config
 from . import util
 from nonebot import get_bot
+from nonebot.log import logger
 from pydantic import BaseModel
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -24,10 +25,10 @@ app.add_middleware(
 templates = Jinja2Templates(directory="./src/plugins/musicCollect/template")
 app.mount(
     "/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
-
+logger.info("Web接口创建完成")
 
 @app.get("/")
-async def ret_page(request: Request, school_id: int):
+async def ret_page(request: Request, school_id: str):
     if (config.schoolSettings.get(school_id, None) == None):
         return {"res": '-1'}
     return templates.TemplateResponse(
@@ -65,10 +66,11 @@ async def ret_page(request: Request, school_id: str):
 @app.get("/getLatestID")
 async def read_id(school_id: str):
     # 读取当前学校info，同时替代了开关功能，因为如果这里有数据那么当前肯定处于点歌开启状态
+    status = await util.get_switch(school_id)
     info = config.schoolInfo.get(school_id, None)
+    print(school_id)
     if (info == None):
         return {"res": '-1'}
-
     song_list = info['song_list']
     for v in song_list:
         if (v['played'] == 0):
@@ -80,7 +82,8 @@ async def read_id(school_id: str):
 
 
 @app.get("/getPlayInfo")
-async def play_id(school_id: int, id: int = 1):
+async def play_id(school_id: str, id: int = 1):
+    status = await util.get_switch(school_id)
     info = config.schoolInfo.get(school_id, None)
     if (info == None):
         return {"res": '-1'}
@@ -107,12 +110,11 @@ async def play_id(school_id: int, id: int = 1):
             if (v['id'] == id):
                 async with config.lock:
                     v['played'] = 1
-                    fs = open(f"./store/{info['log_file']}", "w")
+                    info["current_song_id"] = id
+                    info["current_song_title"] = f"{v['name']} - {v['author']}"
+                    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
                     fs.write(json.dumps(info))
                     fs.close()
-
-                info["current_song_id"] = id
-                info["current_song_title"] = f"{v['name']} - {v['author']}"
 
                 bot: Bot = get_bot(str(botid))
                 for gid in setting['groups']:
@@ -125,14 +127,19 @@ async def play_id(school_id: int, id: int = 1):
 
 @app.get("/getOperations")
 async def get_operations(school_id: str):
-    info = config.schoolInfo.get(school_id, None)
-    if (info == None):
-        return {"res": '-1'}
+    async with config.lock:
+        status = await util.get_switch(school_id)
+        info = config.schoolInfo.get(school_id, None)
+        if (info == None):
+            return {"res": '-1'}
 
-    opertaionList = info['opertaion_list']
-    res = opertaionList[:]
-    opertaionList.clear()
-    return res
+        opertaionList = info['operation_list']
+        res = opertaionList[:]
+        opertaionList.clear()
+        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+        fs.write(json.dumps(info))
+        fs.close()
+        return res
 
 
 # 通知接口，可通过此接口向我发送通知

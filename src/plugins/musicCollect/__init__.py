@@ -4,6 +4,7 @@ from . import matcher_netease
 from . import matcher_qq
 from . import outer_api
 from . import command_user
+from . import command_admin
 import asyncio
 
 asyncio.run(config.init_config())

@@ -1,0 +1,21 @@
+{
+    "groups": ["762907200"],
+    "cardname": "just a test",
+    "bankeywords": ["123", "456"],
+    "timezone": [
+        {
+            "settime": [11, 20, 12, 30],
+            "setdate":[1,2,3,4,5,6,7],
+            "mainlimit":30,
+            "personlimit":2,
+            "voteneed":7
+        },
+        {
+            "settime": [1, 10, 8, 30],
+            "setdate":[1,2,3,4,5,6,7],
+            "mainlimit":30,
+            "personlimit":10,
+            "voteneed":7
+        }
+    ]
+}

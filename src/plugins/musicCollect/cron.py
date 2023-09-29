@@ -1,5 +1,9 @@
 import time
+import datetime
+import random
+import os
 import json
+import asyncio
 from . import config
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot_plugin_apscheduler import scheduler
@@ -8,81 +12,105 @@ from nonebot import get_bot
 from nonebot import require
 require("nonebot_plugin_apscheduler")
 
-cronList = dict()
+cronList = list()
+cronLock = asyncio.Lock()
 
+async def run_start_order(school_id, tzinfo: dict):
+    async with cronLock:
+        info: dict = config.schoolInfo.get(school_id, {})
+        setting: dict = config.schoolSettings[school_id]
 
-async def run_start_order(id):
-    if (config.getVal(id, 'orderSwitch') == 1):
-        return
-    fileLog = time.strftime("%Y_%m_%d_%H", time.localtime()) + ".log"
-    config.setVal(id, 'fileLog', fileLog)
-    config.setVal(id, 'orderSwitch', 1)
+        if (info.get("switch_status", 0) == 1):
+            return
+        
+        # 判断当前星期数是否在设置日期中
+        weekday_number = datetime.date.today().weekday() + 1
+        if (weekday_number not in tzinfo['setdate']):
+            return
 
-    logger.info(f"点歌开启，日志文件：./store/{fileLog}")
+        set_time = tzinfo['settime']
+        date_r = time.strftime(f"%m_%d", time.localtime())
+        # 缓存文件名：日期 月_日_设置时_设置分.log
+        # 即只要开启时间不变便可续读此时段的已点歌信息
+        # 还要确保该学校文件夹存在
+        os.makedirs(f"./store/{school_id}", exist_ok=True)
+        log_file = f"{date_r}_{set_time[0]}_{set_time[1]}.log"
 
-    try:
-        bot: Bot = get_bot(str(id))
-        for gid in config.getVal(id, "groups"):
-            await bot.set_group_card(group_id=gid, user_id=id, card='激情点歌ing 私发/群聊 分享链接 即可点歌')
+        """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复info信息，再进行当前用户的点歌操作"""
+        if os.path.exists(f"./store/{school_id}/{log_file}"):
+            fs = open(f"./store/{school_id}/{log_file}", "r")
+            config.schoolInfo[school_id] = json.loads(fs.read())
+            fs.close()
+            logger.info("从异常数据丢失中恢复，已加载数据")
+            return
+        else:
+            config.schoolInfo[school_id] = {}
+            config.schoolInfo[school_id]['switch_status'] = 1
+            config.schoolInfo[school_id]['log_file'] = log_file
+            config.schoolInfo[school_id]['tzinfo'] = tzinfo
+            config.schoolInfo[school_id]['song_list'] = list()
+            config.schoolInfo[school_id]['order_users'] = dict()
+            config.schoolInfo[school_id]['vote_num'] = 0
+            config.schoolInfo[school_id]['vote_list'] = list()
+            config.schoolInfo[school_id]['operation_list'] = list()
+            config.schoolInfo[school_id]['current_song_id'] = 0
+            config.schoolInfo[school_id]['current_song_title'] = ""
+
+        botid = config.system.bot_id
+        bot: Bot = get_bot(botid)
+        for gid in setting['groups']:
+            await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
             await bot.send_group_msg(group_id=gid,
-                                     message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
-    except:
-        pass
+                                    message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
+
+        logger.info(f"{school_id} 点歌开启，日志文件：./store/{school_id}/{log_file}")
 
 
-async def run_stop_order(id):
-    config.setVal(id, 'prioritified', 0)
-    config.setVal(id, 'orderSwitch', 0)
-    config.setVal(id, 'fileLog', '')
-    config.setVal(id, 'currentID', 0)
-    config.setVal(id, 'currentTitle', "")
-    config.getVal(id, 'orderPeople').clear()
-    config.getVal(id, 'orderList').clear()
-    config.getVal(id, 'opertaionList').clear()
+async def run_stop_order(school_id):
+    async with cronLock:
+        info: dict = config.schoolInfo.get(school_id)
+        setting: dict = config.schoolSettings[school_id]
+        if (info.get("switch_status", 0) == 0):
+            return
+        config.schoolInfo.pop(school_id)
+        try:
+            botid = config.system.bot_id
+            bot: Bot = get_bot(str(botid))
+            for gid in setting['groups']:
+                await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
+                await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
+        except:
+            pass
 
-    try:
-        bot: Bot = get_bot(str(id))
-        for gid in config.getVal(id, "groups"):
-            await bot.set_group_card(group_id=gid, user_id=id, card=config.getVal(id, "card"))
-            await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
-    except:
-        pass
+"""
+当设置被更改后，应该重新进行初始化流程
+
+重新进行初始化流程并不会影响当前正在进行的点歌操作
+"""
 
 
-def initialize_cron():
-    for id in config.botList:
-        set_time = config.getVal(id, "set_time")
-        if cronList.get(f"{id}AMSTART") != f"{set_time[0]}:{set_time[1]}":
-            if cronList.get(f"{id}AMSTART") != None:
-                scheduler.remove_job(f"{id}AMSTART")
+async def init_cron():
+
+    # 清空正在维护的定时任务
+    for id in cronList:
+        scheduler.remove_job(id)
+    cronList.clear()
+
+    # 为每个学校创建定时任务
+    for id in config.schoolList.keys():
+        setting = config.schoolSettings[id]
+        for tzinfo in setting['timezone']:
+            set_time = tzinfo['settime']
+
+            # 传递当前时段的设置信息给启动任务
+            jobs_id = id + "_" + str(random.randint(10000, 99999))
             scheduler.add_job(run_start_order, "cron",
-                              hour=set_time[0], minute=set_time[1], id=f"{id}AMSTART",  args=[id])
-            cronList[f"{id}AMSTART"] = f"{set_time[0]}:{set_time[1]}"
-            logger.info(f"启动：bot({id}) AMSTART")
+                              hour=set_time[0], minute=set_time[1], id=f"{jobs_id}",  args=[id, tzinfo])
+            cronList.append(jobs_id)
 
-        if cronList.get(f"{id}PMSTART") != f"{set_time[2]}:{set_time[3]}":
-            if cronList.get(f"{id}PMSTART") != None:
-                scheduler.remove_job(f"{id}PMSTART")
-            scheduler.add_job(run_start_order, "cron",
-                              hour=set_time[2], minute=set_time[3], id=f"{id}PMSTART", args=[id])
-            cronList[f"{id}PMSTART"] = f"{set_time[2]}:{set_time[3]}"
-            logger.info(f"启动：bot({id}) PMSTART")
-
-        if cronList.get(f"{id}AMSTOP") != f"{set_time[4]}:{set_time[5]}":
-            if cronList.get(f"{id}AMSTOP") != None:
-                scheduler.remove_job(f"{id}AMSTOP")
+            jobs_id = id + "_" + str(random.randint(10000, 99999))
             scheduler.add_job(run_stop_order, "cron",
-                              hour=set_time[4], minute=set_time[5], id=f"{id}AMSTOP",  args=[id])
-            cronList[f"{id}AMSTOP"] = f"{set_time[4]}:{set_time[5]}"
-            logger.info(f"启动：bot({id}) AMSTOP")
+                              hour=set_time[2], minute=set_time[3], id=f"{jobs_id}",  args=[id])
+            cronList.append(jobs_id)
 
-        if cronList.get(f"{id}PMSTOP") != f"{set_time[6]}:{set_time[7]}":
-            if cronList.get(f"{id}PMSTOP") != None:
-                scheduler.remove_job(f"{id}PMSTOP")
-            scheduler.add_job(run_stop_order, "cron",
-                              hour=set_time[6], minute=set_time[7], id=f"{id}PMSTOP",  args=[id])
-            cronList[f"{id}PMSTOP"] = f"{set_time[6]}:{set_time[7]}"
-            logger.info(f"启动：bot({id}) PMSTOP")
-
-
-initialize_cron()
+        logger.info(f"学校：{id} 定时任务启动完毕")

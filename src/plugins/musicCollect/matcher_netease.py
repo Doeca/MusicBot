@@ -26,10 +26,11 @@ from nonebot.log import logger
 """
 
 link_1 = on_regex(
-    'http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}', rule=util.group_checker)
+    'http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}')
 link_2 = on_regex(
-    'http(s|).*?music\.163\.com.*?&amp;id=([0-9]{1,})', rule=util.group_checker)
-
+    'http(s|).*?music\.163\.com.*?&amp;id=([0-9]{1,})')
+link_3 = on_regex(
+    '"musicUrl":"https:.*?music.163.com.*?url\?id=([0-9]{2,9})"&#44')
 
 
 
@@ -57,6 +58,17 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[1]
+    res = await util.addTolist(school_id, songid, 'wy', e.user_id)
+    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+
+@link_3.handle()
+async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], RegexGroup()]):
+    school_id = await config.get_id(str(e.group_id))
+    status = await util.get_switch(school_id)
+    if status == False:
+        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        return
+    songid = link[0]
     res = await util.addTolist(school_id, songid, 'wy', e.user_id)
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 

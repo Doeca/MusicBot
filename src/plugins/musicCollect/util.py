@@ -52,6 +52,8 @@ async def get_switch(school_id: str):
     通过schoolid尝试获取schoolInfo，然后get switch_status，如果开启则直接返回开启
     否则去读取学校设置，判断是否在某个时间段里，如果在就执行cron的开启点歌计划
     """
+    if(school_id == ""):
+        return False
     info: dict = config.schoolInfo.get(school_id, {})
     if (info.get('switch_status', 0) == 1):
         return True

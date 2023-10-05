@@ -38,7 +38,8 @@ link_4 = on_regex(
 @link_1.handle()
 async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
     school_id = await config.get_id(str(e.group_id))
-    if util.get_switch(school_id) == False:
+    status = await util.get_switch(school_id)
+    if status == False:
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
 

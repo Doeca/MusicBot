@@ -59,6 +59,6 @@ async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg'
     apiUrl = config.system.music_api
     raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
     await util.httpGet(f"{apiUrl}/update_cookie?raw={raw}")
-    await util.sendMsg(bot, e, f"Cookies：{arg}\n已经上传", at_sender=True, reply_message=True)
+    await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
 
 logger.info("管理端命令加载完成")

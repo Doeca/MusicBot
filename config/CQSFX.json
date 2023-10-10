@@ -1,19 +1,19 @@
-{
-    "groups": ["571777125","799422129","762907200"],
-    "cardname": "重庆大学点歌姬",
+﻿{
+    "groups": ["933700536","543613447"],
+    "cardname": "点歌姬",
     "bankeywords": ["lost rivers","义勇军"],
     "timezone": [
         {
             "settime": [11, 0, 13, 0],
             "setdate":[1,2,3,4,5,6,7],
-            "mainlimit":35,
+            "mainlimit":30,
             "personlimit":2,
             "voteneed":5
         },
         {
             "settime": [17, 0, 19, 0],
             "setdate":[1,2,3,4,5,6,7],
-            "mainlimit":40,
+            "mainlimit":30,
             "personlimit":2,
             "voteneed":5
         }

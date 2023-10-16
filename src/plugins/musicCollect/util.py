@@ -10,6 +10,7 @@ from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
 from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
 from nonebot.adapters.onebot.v11 import MessageEvent as v11MsgEvent
 from nonebot.adapters.onebot.v12 import MessageEvent as v12MsgEvent
+from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
 
 def unescape(str: str):
@@ -26,6 +27,35 @@ async def httpGet(url):
             else:
                 return None
 
+async def change_card(gids:list[str]):
+    for gid in gids:
+        if gid.find("@chatroom") == -1:
+            bot:Bot = get_bot(config.system.bot_id_qq)
+            await bot.set_group_card(group_id=gid, user_id=config.system.bot_id_qq, card="点歌列表已满，努力播放ing")
+        else:
+            bot: Bot = get_bot(config.system.bot_id_wx)
+            await bot.call_api("wx.set_group_nickname", group_id=gid, nickname="点歌列表已满")
+
+# 适配权限判断
+async def authorized(e: Union[v11GMsgEvent, v12GMsgEvent]) -> bool:
+    if str(e.user_id) in config.system.superusers:
+        return True
+    gid = str(e.group_id)
+    if gid.find("@chatroom") != -1:
+        bot: Bot = get_bot(config.system.bot_id_wx)
+        gm_list = await bot.get_group_member_list(group_id=gid)
+        if len(gm_list) == 0:
+            return False
+        if gm_list[0]['user_id'] == e.user_id:
+            return True
+    else:
+        bot: Bot = get_bot(config.system.bot_id_qq)
+        perm = (GROUP_ADMIN | GROUP_OWNER)
+        resp: bool = await perm(bot, e)
+        return resp
+
+# 适配bot.send
+
 
 async def send(e: Union[v11GMsgEvent, v12GMsgEvent], message="", at_sender=True, reply_message=True):
     gid = str(e.group_id)
@@ -35,7 +65,7 @@ async def send(e: Union[v11GMsgEvent, v12GMsgEvent], message="", at_sender=True,
     else:
         bot: Bot = get_bot(config.system.bot_id_qq)
         resp = await bot.send(e, message=message, at_sender=at_sender,
-                 reply_message=reply_message)
+                              reply_message=reply_message)
     return resp
 # 获取跳转后的链接
 
@@ -139,11 +169,8 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: str):
         fs.close()
 
     if song_info['id'] >= info['tzinfo']['mainlimit']:
-        botid = config.system.bot_id
-        bot: Bot = get_bot(str(botid))
         setting: dict = config.schoolSettings[school_id]
-        for gid in setting['groups']:
-            await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
+        change_card(setting['groups'])
 
     return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}
 

@@ -7,11 +7,9 @@ from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot import on_command,  on_regex
 from typing import Union
-from nonebot.permission import SUPERUSER
-from nonebot.internal.adapter import Bot, GROUP_ADMIN, GROUP_OWNER
+from nonebot.internal.adapter import Bot
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
 from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
-
 
 # 帮助
 help_matcher = on_regex('帮助|\/help')
@@ -65,10 +63,9 @@ async def next(e: Union[v11GMsgEvent, v12GMsgEvent], bot: Bot):
         return
 
     # 读取权限
-    userid = str(e.user_id)
-    perm = (SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-    res: bool = await perm(bot, e)
+    res: bool = await util.authorized(e)
 
+    userid = str(e.user_id)
     vote_need = info['tzinfo']['voteneed']
     if (res == True):
         await util.addOperation(school_id, 'next')
@@ -136,7 +133,7 @@ async def who_got(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], arg: str = Arg
         resp = f"歌曲《{name}》的点歌人是：{stranger_info['nickname']}({userid})"
     else:
         user_info = await bot.get_user_info(user_id=userid)
-        resp = f"歌曲《{name}》的点歌人是：{user_info['user_displayname']}({user_info['wx']['wx_number']})"
+        resp = f"歌曲《{name}》的点歌人是：微信用户 {user_info['user_name']}({user_info['wx']['wx_number']})"
     await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 rule_matcher = on_command(

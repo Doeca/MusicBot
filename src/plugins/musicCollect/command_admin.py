@@ -7,20 +7,20 @@ from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot import on_command
 from typing import Union
+from nonebot.internal.adapter import Bot
 from nonebot.permission import SUPERUSER
-from nonebot.internal.adapter import Bot, GROUP_ADMIN, GROUP_OWNER
 from nonebot.adapters.onebot.v11 import PrivateMessageEvent as v11PMsgEvent
 from nonebot.adapters.onebot.v12 import PrivateMessageEvent as v12PMsgEvent
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
 from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
 
 
-volume_matcher = on_command("volume", permission=(
-    SUPERUSER | GROUP_ADMIN | GROUP_OWNER), aliases={"音量"}, rule=util.group_checker)
-
-
+volume_matcher = on_command("volume", aliases={"音量"}, rule=util.group_checker)
 @volume_matcher.handle()
-async def volume_handle(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
+async def volume_handle(bot: Bot,e: Union[v11GMsgEvent, v12GMsgEvent], matcher: Matcher, args: Message = CommandArg()):
+    auth = await util.authorized(e)
+    if auth == False:
+        return
     rarg = args.extract_plain_text().strip()
     volume = rarg
     if volume != '':
@@ -50,7 +50,6 @@ async def volume_got(e: Union[v11GMsgEvent, v12GMsgEvent], arg: str = ArgStr('ar
 
 
 cookie_matcher = on_command("cookie", permission=SUPERUSER)
-
 
 @cookie_matcher.handle()
 async def cookieUploadPre(bot: Bot, e: v11PMsgEvent, matcher: Matcher, args: Message = CommandArg()):

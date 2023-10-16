@@ -45,6 +45,7 @@ class Config(BaseModel, extra=Extra.ignore):
     music_api: str
     bot_id_qq: str
     bot_id_wx: str
+    superusers: list[str]
 
 
 load_status = 0 # 当前开启状态

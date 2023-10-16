@@ -5,7 +5,8 @@ import os
 import json
 import asyncio
 from . import config
-from nonebot.adapters.onebot.v11 import Bot
+from nonebot.adapters.onebot.v11 import Bot as QQBot
+from nonebot.adapters.onebot.v12 import Bot as WXBot
 from nonebot_plugin_apscheduler import scheduler
 from nonebot.log import logger
 from nonebot import get_bot
@@ -15,6 +16,7 @@ require("nonebot_plugin_apscheduler")
 cronList = list()
 cronLock = asyncio.Lock()
 
+
 async def run_start_order(school_id, tzinfo: dict):
     async with cronLock:
         info: dict = config.schoolInfo.get(school_id, {})
@@ -22,7 +24,7 @@ async def run_start_order(school_id, tzinfo: dict):
 
         if (info.get("switch_status", 0) == 1):
             return
-        
+
         # 判断当前星期数是否在设置日期中
         weekday_number = datetime.date.today().weekday() + 1
         if (weekday_number not in tzinfo['setdate']):
@@ -56,12 +58,17 @@ async def run_start_order(school_id, tzinfo: dict):
             config.schoolInfo[school_id]['current_song_id'] = 0
             config.schoolInfo[school_id]['current_song_title'] = ""
 
-        botid = config.system.bot_id
-        bot: Bot = get_bot(botid)
+        qqbot: QQBot = get_bot(config.system.bot_id_qq)
+        wxbot: WXBot = get_bot(config.system.bot_id_wx)
         for gid in setting['groups']:
-            await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
-            await bot.send_group_msg(group_id=gid,
-                                    message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
+            if gid.find("@chatroom") == -1:
+                await qqbot.set_group_card(group_id=gid, user_id=config.system.bot_id_qq, card='激情点歌ing 分享链接到群内 即可点歌')
+                await qqbot.send_group_msg(group_id=gid,
+                                           message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
+            else:
+                await wxbot.call_api("wx.set_group_nickname", group_id=gid, nickname='激情点歌ing 分享链接到群内 即可点歌')
+                await wxbot.send_message(message_type="group", group_id=gid,
+                                         message="🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦")
 
         logger.info(f"{school_id} 点歌开启，日志文件：./store/{school_id}/{log_file}")
 
@@ -74,11 +81,16 @@ async def run_stop_order(school_id):
             return
         config.schoolInfo.pop(school_id)
         try:
-            botid = config.system.bot_id
-            bot: Bot = get_bot(str(botid))
+            qqbot: QQBot = get_bot(config.system.bot_id_qq)
+            wxbot: WXBot = get_bot(config.system.bot_id_wx)
             for gid in setting['groups']:
-                await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
-                await bot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
+                if gid.find("@chatroom") == -1:
+                    await qqbot.set_group_card(group_id=gid, user_id=config.system.bot_id_qq, card=setting['cardname'])
+                    await qqbot.send_group_msg(group_id=gid, message="🦭点歌已经结束了哦，大家下次再来吧～")
+                else:
+                    await wxbot.call_api("wx.set_group_nickname", group_id=gid, nickname=setting['cardname'])
+                    await wxbot.send_message(message_type="group", group_id=gid,
+                                             message="🦭点歌已经结束了哦，大家下次再来吧～")
         except:
             pass
 

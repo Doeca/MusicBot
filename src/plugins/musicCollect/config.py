@@ -43,7 +43,8 @@ class Config(BaseModel, extra=Extra.ignore):
     backend_url: str
     setting_domain: str
     music_api: str
-    bot_id: str
+    bot_id_qq: str
+    bot_id_wx: str
 
 
 load_status = 0 # 当前开启状态
@@ -109,7 +110,7 @@ async def init_config():
 """
 
 
-async def get_id(gid: int):
+async def get_id(gid: str):
     for key in schoolSettings.keys():
         if gid in schoolSettings[key]['groups']:
             return key

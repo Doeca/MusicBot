@@ -5,7 +5,9 @@ from typing import Union
 from nonebot import on_regex, on_message
 from nonebot.params import RegexGroup, RegexStr
 from typing import Any, Annotated
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent,  Event
+from nonebot.internal.adapter import Bot
+from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
+from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
 from nonebot.log import logger
 
 
@@ -31,9 +33,8 @@ link_2 = on_regex(
     '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre')
 
 
-
 @link_1.handle()
-async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
+async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[str, RegexStr()]):
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
@@ -42,13 +43,12 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
     resp = await util.httpGet(link)
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
-    res = await util.addTolist(school_id, songmid, 'qq', e.user_id)
+    res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
-
 @link_2.handle()
-async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], RegexGroup()]):
+async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tuple[Any, ...], RegexGroup()]):
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
@@ -59,7 +59,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
     resp = await util.httpGet(rawlink)
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
-    res = await util.addTolist(school_id, songmid, 'qq', e.user_id)
+    res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 logger.info("QQ音乐监听器创建完成")

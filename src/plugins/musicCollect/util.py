@@ -3,13 +3,17 @@ import datetime
 import json
 import aiohttp
 from . import config
+from typing import Union
 from nonebot import get_bot
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
+from nonebot.internal.adapter import Bot
+from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
+from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
 
 
 def unescape(str: str):
     str = str.replace("\\/", "/")
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
+
 
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
@@ -27,7 +31,7 @@ async def get_realurl(url):
             return resp.headers.get('Location', '')
 
 
-async def group_checker(e: GroupMessageEvent) -> bool:
+async def group_checker(e: Union[v11GMsgEvent, v12GMsgEvent]) -> bool:
     school_id = await config.get_id(str(e.group_id))
     if (school_id == ''):
         return False
@@ -47,12 +51,12 @@ async def is_black(school_id: str, name: str):
 
 
 async def get_switch(school_id: str):
-    # 获取当前点歌状态
     """
+    获取当前点歌状态
     通过schoolid尝试获取schoolInfo，然后get switch_status，如果开启则直接返回开启
     否则去读取学校设置，判断是否在某个时间段里，如果在就执行cron的开启点歌计划
     """
-    if(school_id == ""):
+    if (school_id == ""):
         return False
     info: dict = config.schoolInfo.get(school_id, {})
     if (info.get('switch_status', 0) == 1):
@@ -76,7 +80,7 @@ async def get_switch(school_id: str):
     return False
 
 
-async def addTolist(school_id: str, songid: str, type: str, user_id: int):
+async def addTolist(school_id: str, songid: str, type: str, user_id: str):
     """
     点歌实际处理逻辑，将数据添加到info中，type选填wy或qq
     """
@@ -93,7 +97,7 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
     info: dict = config.schoolInfo.get(school_id, {})
     song_list: list = info.get('song_list', [])
     order_users: dict = info.get('order_users', {})
-    
+
     if (order_users.get(f"user{user_id}", 0) >= info['tzinfo']['personlimit']):
         return {'code': -3, "msg": f"该时段每人限点{info['tzinfo']['personlimit']}首，你无法继续点歌🫣"}
     if (len(song_list) >= info['tzinfo']['mainlimit']):

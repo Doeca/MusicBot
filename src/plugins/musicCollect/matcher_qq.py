@@ -38,13 +38,13 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[str,
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     resp = await util.httpGet(link)
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
     res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_2.handle()
@@ -52,7 +52,7 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tupl
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     rawlink = link[0]
     rawlink = util.unescape(rawlink)
@@ -60,6 +60,6 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tupl
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
     res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 logger.info("QQ音乐监听器创建完成")

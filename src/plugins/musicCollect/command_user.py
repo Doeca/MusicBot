@@ -6,20 +6,23 @@ from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot import on_command,  on_regex
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
+from typing import Union
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
+from nonebot.internal.adapter import Bot, GROUP_ADMIN, GROUP_OWNER
+from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
+from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
+
 
 # 帮助
 help_matcher = on_regex('帮助|\/help')
 
 
 @help_matcher.handle()
-async def help(e: GroupMessageEvent, bot: Bot):
+async def help(e: Union[v11GMsgEvent, v12GMsgEvent], bot: Bot):
     fs = open("./help.store", "r")
     resp = fs.read()
     fs.close()
-    await bot.send(e, message=resp, at_sender=True, reply_message=True)
+    await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 
 # 1.歌单
@@ -27,10 +30,10 @@ song_list_matcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$'
 
 
 @song_list_matcher.handle()
-async def song_list(e: GroupMessageEvent, bot: Bot):
+async def song_list(e: Union[v11GMsgEvent, v12GMsgEvent], bot: Bot):
     school_id = await config.get_id(str(e.group_id))
     resp = await util.generateSongList(school_id)
-    await bot.send(e, message=resp, at_sender=True, reply_message=True)
+    await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 # 2.正在播放
 playing_matcher = on_regex(
@@ -38,7 +41,7 @@ playing_matcher = on_regex(
 
 
 @playing_matcher.handle()
-async def playing(e: GroupMessageEvent, bot: Bot):
+async def playing(e: Union[v11GMsgEvent, v12GMsgEvent], bot: Bot):
     school_id = await config.get_id(str(e.group_id))
     info = config.schoolInfo.get(school_id, None)
     title = info['current_song_title']
@@ -46,23 +49,23 @@ async def playing(e: GroupMessageEvent, bot: Bot):
         resp = '👁‍🗨当前没有在播放歌曲'
     else:
         resp = f"🅿️当前歌曲【{title}】"
-    await bot.send(e, message=resp, at_sender=True, reply_message=True)
+    await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 # 3.切歌
 next_matcher = on_command("next", aliases={"切歌"}, rule=util.group_checker)
 
 
 @next_matcher.handle()
-async def next(e: GroupMessageEvent, bot: Bot):
+async def next(e: Union[v11GMsgEvent, v12GMsgEvent], bot: Bot):
     school_id = await config.get_id(str(e.group_id))
     info: dict = config.schoolInfo.get(school_id, dict())
     if (info.get("current_song_id", 0) == 0):
         resp = "当前没有在播放歌曲哦，无法切歌"
-        await bot.send(e, message=resp, at_sender=True, reply_message=True)
+        await util.send(e, message=resp, at_sender=True, reply_message=True)
         return
 
     # 读取权限
-    userid = e.user_id
+    userid = str(e.user_id)
     perm = (SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
     res: bool = await perm(bot, e)
 
@@ -70,13 +73,13 @@ async def next(e: GroupMessageEvent, bot: Bot):
     if (res == True):
         await util.addOperation(school_id, 'next')
         resp = "已切换到下一首歌"
-        await bot.send(e, message=resp, at_sender=True, reply_message=True)
+        await util.send(e, message=resp, at_sender=True, reply_message=True)
     else:
         vote_num = info['vote_num']
         vote_list = info['vote_list']
         if (userid in vote_list):
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
-            await bot.send(e, message=resp, at_sender=True, reply_message=True)
+            await util.send(e, message=resp, at_sender=True, reply_message=True)
             return
         vote_num += 1
         vote_list.append(userid)
@@ -90,8 +93,7 @@ async def next(e: GroupMessageEvent, bot: Bot):
             fs = open(f"./store/{school_id}/{info['log_file']}", "w")
             fs.write(json.dumps(info))
             fs.close()
-        await bot.send(e, message=resp, at_sender=True, reply_message=True)
-
+        await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 
 # 4.谁点的歌
@@ -100,7 +102,7 @@ who_matcher = on_command(
 
 
 @who_matcher.handle()
-async def who_handle(e: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
+async def who_handle(e: Union[v11GMsgEvent, v12GMsgEvent], matcher: Matcher, args: Message = CommandArg()):
     school_id = await config.get_id(str(e.group_id))
     info: dict = config.schoolInfo.get(school_id, dict())
     id = args.extract_plain_text().strip()
@@ -115,7 +117,7 @@ async def who_handle(e: GroupMessageEvent, matcher: Matcher, args: Message = Com
 
 
 @who_matcher.got("arg", prompt="请输入歌曲列表中的序号")
-async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
+async def who_got(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], arg: str = ArgStr('arg')):
     school_id = await config.get_id(str(e.group_id))
     info: dict = config.schoolInfo.get(school_id, dict())
 
@@ -128,17 +130,23 @@ async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
     else:
         await who_matcher.finish(f"操作已取消")
     userid = song_list[id-1]['uin']
-    stranger_info = await bot.get_stranger_info(user_id=userid)
     name = f"{song_list[id-1]['name']} - {song_list[id-1]['author']}"
-    resp = f"歌曲《{name}》的点歌人是：{stranger_info['nickname']}({userid})"
-    await bot.send(e, message=resp, at_sender=True, reply_message=True)
+    if isinstance(e, v11GMsgEvent):
+        stranger_info = await bot.get_stranger_info(user_id=userid)
+        resp = f"歌曲《{name}》的点歌人是：{stranger_info['nickname']}({userid})"
+    else:
+        user_info = await bot.get_user_info(user_id=userid)
+        resp = f"歌曲《{name}》的点歌人是：{user_info['user_displayname']}({user_info['wx']['wx_number']})"
+    await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 rule_matcher = on_command(
     "rule", aliases={"规则", "点歌规则"})
+
+
 @rule_matcher.handle()
-async def rule(bot: Bot, e:GroupMessageEvent):
+async def rule(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent]):
     school_id = await config.get_id(str(e.group_id))
-    if(school_id == ""):
+    if (school_id == ""):
         return
     setting: dict = config.schoolSettings[school_id]
     resp = "🤘🎵点歌规则：\n"
@@ -151,6 +159,6 @@ async def rule(bot: Bot, e:GroupMessageEvent):
         resp += f" 歌单上限{v['mainlimit']}首，每人限点{v['personlimit']}首\n"
 
     resp += "🧿支持平台: QQ音乐、网易云音乐"
-    await bot.send(e, message=resp, at_sender=True, reply_message=True)
+    await util.send(e, message=resp, at_sender=True, reply_message=True)
 
 logger.info("用户端命令加载完成")

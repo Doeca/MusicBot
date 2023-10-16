@@ -42,7 +42,7 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[str,
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
 
     real_link = await util.get_realurl(link)
@@ -51,7 +51,7 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[str,
         return
     songid = matches.group(1)
     res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_2.handle()
@@ -59,11 +59,11 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tupl
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[1]
     res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_3.handle()
@@ -71,11 +71,11 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tupl
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[0]
     res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_4.handle()
@@ -83,10 +83,10 @@ async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[tupl
     school_id = await config.get_id(str(e.group_id))
     status = await util.get_switch(school_id)
     if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+        await util.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[0]
     res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    await util.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 logger.info("网易云音乐监听器创建完成")

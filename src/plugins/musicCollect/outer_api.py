@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from nonebot.adapters.onebot.v11 import Bot
+from nonebot.adapters.onebot.v11 import Bot as QQBot
+from nonebot.adapters.onebot.v12 import Bot as WXBot
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -26,6 +27,7 @@ templates = Jinja2Templates(directory="./src/plugins/musicCollect/template")
 app.mount(
     "/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
 logger.info("Web接口创建完成")
+
 
 @app.get("/")
 async def ret_page(request: Request, school_id: str):
@@ -100,9 +102,15 @@ async def play_id(school_id: str, id: int = 1):
             v = config.random[id-10000]
             info["current_song_title"] = f"{v['name']} - {v['author']}"
 
-            bot: Bot = get_bot(botid)
+            qqbot: QQBot = get_bot(config.system.bot_id_qq)
+            wxbot: WXBot = get_bot(config.system.bot_id_wx)
+            resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
             for gid in setting['groups']:
-                await bot.send_group_msg(group_id=gid, message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
+                if gid.find("@chatroom") != -1:
+                    await qqbot.send_group_msg(group_id=gid, message=resp)
+                else:
+                    await wxbot.send_message(message_type="group", group_id=gid,
+                                             message=resp)
             return v
 
         song_list = info['song_list']
@@ -115,10 +123,16 @@ async def play_id(school_id: str, id: int = 1):
                     fs = open(f"./store/{school_id}/{info['log_file']}", "w")
                     fs.write(json.dumps(info))
                     fs.close()
-
-                bot: Bot = get_bot(str(botid))
+                qqbot: QQBot = get_bot(config.system.bot_id_qq)
+                wxbot: WXBot = get_bot(config.system.bot_id_wx)
+                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
                 for gid in setting['groups']:
-                    await bot.send_group_msg(group_id=gid, message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
+                    
+                    if gid.find("@chatroom") != -1:
+                        await qqbot.send_group_msg(group_id=gid, message=resp)
+                    else:
+                        await wxbot.send_message(message_type="group", group_id=gid,
+                                                 message=resp)
                 return v
     except:
         return {"res": '-1'}
@@ -145,8 +159,8 @@ async def get_operations(school_id: str):
 # 通知接口，可通过此接口向我发送通知
 @app.get("/notify")
 async def get_operations(text: str):
-    botid = config.system.bot_id
-    bot: Bot = get_bot(botid)
+    botid = config.system.bot_id_qq
+    bot: QQBot = get_bot(botid)
     await bot.send_private_msg(user_id=1124468334,
                                message=base64.b64decode(text).decode("utf-8"))
     return {"res": 0}

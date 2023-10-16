@@ -8,6 +8,8 @@ from nonebot import get_bot
 from nonebot.internal.adapter import Bot
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as v11GMsgEvent
 from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
+from nonebot.adapters.onebot.v11 import MessageEvent as v11MsgEvent
+from nonebot.adapters.onebot.v12 import MessageEvent as v12MsgEvent
 
 
 def unescape(str: str):
@@ -25,10 +27,25 @@ async def httpGet(url):
                 return None
 
 
+async def send(e: Union[v11GMsgEvent, v12GMsgEvent], message="", at_sender=True, reply_message=True):
+    gid = str(e.group_id)
+    if gid.find("@chatroom") != -1:
+        bot: Bot = get_bot(config.system.bot_id_wx)
+        resp = await bot.send(e, message=message, at_sender=at_sender)
+    else:
+        bot: Bot = get_bot(config.system.bot_id_qq)
+        resp = await bot.send(e, message=message, at_sender=at_sender,
+                 reply_message=reply_message)
+    return resp
+# 获取跳转后的链接
+
+
 async def get_realurl(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, allow_redirects=False) as resp:
             return resp.headers.get('Location', '')
+
+# 检查群号是否为点歌群
 
 
 async def group_checker(e: Union[v11GMsgEvent, v12GMsgEvent]) -> bool:

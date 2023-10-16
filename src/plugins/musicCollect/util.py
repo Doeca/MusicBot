@@ -93,7 +93,7 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
     info: dict = config.schoolInfo.get(school_id, {})
     song_list: list = info.get('song_list', [])
     order_users: dict = info.get('order_users', {})
-    print(order_users)
+    
     if (order_users.get(f"user{user_id}", 0) >= info['tzinfo']['personlimit']):
         return {'code': -3, "msg": f"该时段每人限点{info['tzinfo']['personlimit']}首，你无法继续点歌🫣"}
     if (len(song_list) >= info['tzinfo']['mainlimit']):

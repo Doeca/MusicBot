@@ -108,10 +108,11 @@ async def play_id(school_id: str, id: int = 1):
         for gid in setting['groups']:
             try:
                 if gid.find("@chatroom") != -1:
-                    await wxbot.send_group_msg(group_id=gid, message=resp)
-                else:
-                    await qqbot.send_message(detail_type="group", group_id=gid,
+                    await wxbot.send_message(detail_type="group", group_id=gid,
                                                 message=resp)
+                else:
+                    await qqbot.send_group_msg(group_id=gid, message=resp)
+                    
             except:
                 logger.error(f"随机播放出现问题,相关参数 gid:{gid} resp:{resp}")
         return v
@@ -133,10 +134,10 @@ async def play_id(school_id: str, id: int = 1):
             for gid in setting['groups']:
                 try:
                     if gid.find("@chatroom") != -1:
-                        await wxbot.send_group_msg(group_id=gid, message=resp)
-                    else:
-                        await qqbot.send_message(detail_type="group", group_id=gid,
+                        await wxbot.send_message(detail_type="group", group_id=gid,
                                                     message=resp)
+                    else:
+                        await qqbot.send_group_msg(group_id=gid, message=resp)
                 except:
                     logger.error(f"歌单播放出现问题,相关参数\ngid:{gid}\nresp:{resp}\n")
             return v

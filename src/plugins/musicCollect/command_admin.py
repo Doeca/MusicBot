@@ -16,8 +16,10 @@ from nonebot.adapters.onebot.v12 import GroupMessageEvent as v12GMsgEvent
 
 
 volume_matcher = on_command("volume", aliases={"音量"}, rule=util.group_checker)
+
+
 @volume_matcher.handle()
-async def volume_handle(bot: Bot,e: Union[v11GMsgEvent, v12GMsgEvent], matcher: Matcher, args: Message = CommandArg()):
+async def volume_handle(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], matcher: Matcher, args: Message = CommandArg()):
     auth = await util.authorized(e)
     if auth == False:
         return
@@ -51,6 +53,7 @@ async def volume_got(e: Union[v11GMsgEvent, v12GMsgEvent], arg: str = ArgStr('ar
 
 cookie_matcher = on_command("cookie", permission=SUPERUSER)
 
+
 @cookie_matcher.handle()
 async def cookieUploadPre(bot: Bot, e: v11PMsgEvent, matcher: Matcher, args: Message = CommandArg()):
     cookie = args.extract_plain_text().strip()
@@ -67,6 +70,8 @@ async def cookieUpload(bot: Bot, e: v11PMsgEvent, arg: str = ArgStr('arg')):
 
 
 glist_matcher = on_command("glist", permission=SUPERUSER)
+
+
 @glist_matcher.handle()
 async def glist_handle(bot: Bot, e: v12PMsgEvent):
     group_list = await bot.get_group_list()
@@ -77,6 +82,8 @@ async def glist_handle(bot: Bot, e: v12PMsgEvent):
     await bot.send(e, message=resp)
 
 wxopen_matcher = on_command("gopen")
+
+
 @wxopen_matcher.handle()
 async def wxopen_handle(bot: Bot, e: v12GMsgEvent):
     group_list = await bot.get_group_list()
@@ -84,6 +91,19 @@ async def wxopen_handle(bot: Bot, e: v12GMsgEvent):
         if g['group_id'] == e.group_id:
             gname = g['group_name']
     resp = f"群{gname} {e.group_id}请求开启点歌"
-    await bot.send_message(message_type="private", user_id="wxid_if5n579o2h0622",message=resp)
+    await bot.send_message(message_type="private", user_id="wxid_if5n579o2h0622", message=resp)
+
+
+reload_matcher = on_command("reload", permission=SUPERUSER)
+
+
+@reload_matcher.handle()
+async def glist_handle(bot: Bot, e: v11PMsgEvent):
+    from . import config
+    from . import cron
+    await config.init_config()
+    await cron.init_cron()
+    resp = "已重载"
+    await bot.send(e, message=resp)
 
 logger.info("管理端命令加载完成")

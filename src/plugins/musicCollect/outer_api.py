@@ -92,7 +92,6 @@ async def play_id(school_id: str, id: int = 1):
 
     # 读取必要设置
     setting: dict = config.schoolSettings[school_id]
-    botid = config.system.bot_id
 
     info['vote_num'] = 0
     info['vote_list'] = list()

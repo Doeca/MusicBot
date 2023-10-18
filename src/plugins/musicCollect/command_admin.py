@@ -91,7 +91,7 @@ async def wxopen_handle(bot: Bot, e: v12GMsgEvent):
         if g['group_id'] == e.group_id:
             gname = g['group_name']
     resp = f"群{gname} {e.group_id}请求开启点歌"
-    await bot.send_message(message_type="private", user_id="wxid_if5n579o2h0622", message=resp)
+    await bot.send_message(detail_type="private", user_id="wxid_if5n579o2h0622", message=resp)
 
 
 reload_matcher = on_command("reload", permission=SUPERUSER)

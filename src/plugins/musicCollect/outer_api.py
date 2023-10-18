@@ -108,7 +108,7 @@ async def play_id(school_id: str, id: int = 1):
             if gid.find("@chatroom") != -1:
                 await qqbot.send_group_msg(group_id=gid, message=resp)
             else:
-                await wxbot.send_message(message_type="group", group_id=gid,
+                await wxbot.send_message(detail_type="group", group_id=gid,
                                             message=resp)
         return v
 
@@ -130,7 +130,7 @@ async def play_id(school_id: str, id: int = 1):
                 if gid.find("@chatroom") != -1:
                     await qqbot.send_group_msg(group_id=gid, message=resp)
                 else:
-                    await wxbot.send_message(message_type="group", group_id=gid,
+                    await wxbot.send_message(detail_type="group", group_id=gid,
                                                 message=resp)
             return v
 

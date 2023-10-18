@@ -96,45 +96,44 @@ async def play_id(school_id: str, id: int = 1):
     info['vote_num'] = 0
     info['vote_list'] = list()
 
-    try:
-        if id >= 10000:
-            v = config.random[id-10000]
-            info["current_song_title"] = f"{v['name']} - {v['author']}"
 
+    if id >= 10000:
+        v = config.random[id-10000]
+        info["current_song_title"] = f"{v['name']} - {v['author']}"
+
+        qqbot: QQBot = get_bot(config.system.bot_id_qq)
+        wxbot: WXBot = get_bot(config.system.bot_id_wx)
+        resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
+        for gid in setting['groups']:
+            if gid.find("@chatroom") != -1:
+                await qqbot.send_group_msg(group_id=gid, message=resp)
+            else:
+                await wxbot.send_message(message_type="group", group_id=gid,
+                                            message=resp)
+        return v
+
+    song_list = info['song_list']
+    for v in song_list:
+        if (v['id'] == id):
+            async with config.lock:
+                v['played'] = 1
+                info["current_song_id"] = id
+                info["current_song_title"] = f"{v['name']} - {v['author']}"
+                fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+                fs.write(json.dumps(info))
+                fs.close()
             qqbot: QQBot = get_bot(config.system.bot_id_qq)
             wxbot: WXBot = get_bot(config.system.bot_id_wx)
-            resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
+            resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
             for gid in setting['groups']:
+                
                 if gid.find("@chatroom") != -1:
                     await qqbot.send_group_msg(group_id=gid, message=resp)
                 else:
                     await wxbot.send_message(message_type="group", group_id=gid,
-                                             message=resp)
+                                                message=resp)
             return v
 
-        song_list = info['song_list']
-        for v in song_list:
-            if (v['id'] == id):
-                async with config.lock:
-                    v['played'] = 1
-                    info["current_song_id"] = id
-                    info["current_song_title"] = f"{v['name']} - {v['author']}"
-                    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-                    fs.write(json.dumps(info))
-                    fs.close()
-                qqbot: QQBot = get_bot(config.system.bot_id_qq)
-                wxbot: WXBot = get_bot(config.system.bot_id_wx)
-                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
-                for gid in setting['groups']:
-                    
-                    if gid.find("@chatroom") != -1:
-                        await qqbot.send_group_msg(group_id=gid, message=resp)
-                    else:
-                        await wxbot.send_message(message_type="group", group_id=gid,
-                                                 message=resp)
-                return v
-    except:
-        return {"res": '-1'}
     return {"res": '-1'}
 
 

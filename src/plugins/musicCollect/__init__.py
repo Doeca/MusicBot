@@ -2,6 +2,7 @@ from . import config
 from . import cron
 from . import matcher_netease
 from . import matcher_qq
+from . import matcher_test
 from . import outer_api
 from . import command_user
 from . import command_admin

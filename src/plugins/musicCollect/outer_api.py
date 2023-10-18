@@ -104,12 +104,15 @@ async def play_id(school_id: str, id: int = 1):
         qqbot: QQBot = get_bot(config.system.bot_id_qq)
         wxbot: WXBot = get_bot(config.system.bot_id_wx)
         resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
-        for gid in setting['groups']:
-            if gid.find("@chatroom") != -1:
-                await qqbot.send_group_msg(group_id=gid, message=resp)
-            else:
-                await wxbot.send_message(detail_type="group", group_id=gid,
-                                            message=resp)
+        try:
+            for gid in setting['groups']:
+                if gid.find("@chatroom") != -1:
+                    await qqbot.send_group_msg(group_id=gid, message=resp)
+                else:
+                    await wxbot.send_message(detail_type="group", group_id=gid,
+                                                message=resp)
+        except:
+            logger.error(f"随机播放出现问题,相关参数 gid:{gid} resp:{resp}")
         return v
 
     song_list = info['song_list']
@@ -122,16 +125,18 @@ async def play_id(school_id: str, id: int = 1):
                 fs = open(f"./store/{school_id}/{info['log_file']}", "w")
                 fs.write(json.dumps(info))
                 fs.close()
-            qqbot: QQBot = get_bot(config.system.bot_id_qq)
-            wxbot: WXBot = get_bot(config.system.bot_id_wx)
-            resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
-            for gid in setting['groups']:
-                
-                if gid.find("@chatroom") != -1:
-                    await qqbot.send_group_msg(group_id=gid, message=resp)
-                else:
-                    await wxbot.send_message(detail_type="group", group_id=gid,
-                                                message=resp)
+            try:
+                qqbot: QQBot = get_bot(config.system.bot_id_qq)
+                wxbot: WXBot = get_bot(config.system.bot_id_wx)
+                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
+                for gid in setting['groups']:
+                    if gid.find("@chatroom") != -1:
+                        await qqbot.send_group_msg(group_id=gid, message=resp)
+                    else:
+                        await wxbot.send_message(detail_type="group", group_id=gid,
+                                                    message=resp)
+            except:
+                logger.error(f"歌单播放出现问题,相关参数 gid:{gid} resp:{resp}")
             return v
 
     return {"res": '-1'}

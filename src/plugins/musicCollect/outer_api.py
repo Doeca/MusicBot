@@ -104,15 +104,16 @@ async def play_id(school_id: str, id: int = 1):
         qqbot: QQBot = get_bot(config.system.bot_id_qq)
         wxbot: WXBot = get_bot(config.system.bot_id_wx)
         resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
-        try:
-            for gid in setting['groups']:
+
+        for gid in setting['groups']:
+            try:
                 if gid.find("@chatroom") != -1:
                     await qqbot.send_group_msg(group_id=gid, message=resp)
                 else:
                     await wxbot.send_message(detail_type="group", group_id=gid,
                                                 message=resp)
-        except:
-            logger.error(f"随机播放出现问题,相关参数 gid:{gid} resp:{resp}")
+            except:
+                logger.error(f"随机播放出现问题,相关参数 gid:{gid} resp:{resp}")
         return v
 
     song_list = info['song_list']
@@ -125,18 +126,19 @@ async def play_id(school_id: str, id: int = 1):
                 fs = open(f"./store/{school_id}/{info['log_file']}", "w")
                 fs.write(json.dumps(info))
                 fs.close()
-            try:
-                qqbot: QQBot = get_bot(config.system.bot_id_qq)
-                wxbot: WXBot = get_bot(config.system.bot_id_wx)
-                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
-                for gid in setting['groups']:
+
+            qqbot: QQBot = get_bot(config.system.bot_id_qq)
+            wxbot: WXBot = get_bot(config.system.bot_id_wx)
+            resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
+            for gid in setting['groups']:
+                try:
                     if gid.find("@chatroom") != -1:
                         await qqbot.send_group_msg(group_id=gid, message=resp)
                     else:
                         await wxbot.send_message(detail_type="group", group_id=gid,
                                                     message=resp)
-            except:
-                logger.error(f"歌单播放出现问题,相关参数 gid:{gid} resp:{resp}")
+                except:
+                    logger.error(f"歌单播放出现问题,相关参数\ngid:{gid}\nresp:{resp}\n")
             return v
 
     return {"res": '-1'}

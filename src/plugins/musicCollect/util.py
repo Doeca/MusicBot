@@ -19,7 +19,16 @@ async def httpGet(url):
                 return data
             else:
                 return None
-
+            
+async def httpPost(url, json_data, head={}):
+    head['Content-Type'] = 'application/json'  # 设置请求头为 JSON 格式
+    async with aiohttp.ClientSession(headers=head) as session:
+        async with session.post(url, json=json_data,) as response:
+            if response.status == 200:
+                response_data = await response.json()  # 解析响应的 JSON 数据
+                return response_data
+            else:
+                return None
 
 async def get_realurl(url):
     async with aiohttp.ClientSession() as session:

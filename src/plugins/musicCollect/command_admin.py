@@ -61,4 +61,17 @@ async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg'
     await util.httpGet(f"{apiUrl}/update_cookie?raw={raw}")
     await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
 
+reload_matcher = on_command("reload", permission=SUPERUSER)
+
+
+@reload_matcher.handle()
+async def glist_handle(bot: Bot, e: PrivateMessageEvent):
+    from . import config
+    from . import cron
+    await config.init_config()
+    await cron.init_cron()
+    resp = "已重载"
+    await bot.send(e, message=resp)
+
+
 logger.info("管理端命令加载完成")

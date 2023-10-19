@@ -44,12 +44,16 @@ class Config(BaseModel, extra=Extra.ignore):
     setting_domain: str
     music_api: str
     bot_id: str
+    wx_host: str
+    wx_port: int
+    local_host: str
+    local_port: int
 
 
-load_status = 0 # 当前开启状态
-schoolList = dict() # id -> 学校名称列表
-schoolSettings = dict() # 后端获取的所有原始数据
-schoolInfo = dict() #   当前点歌开启状态、歌单等即时信息，不受初始化流程影响。
+load_status = 0  # 当前开启状态
+schoolList = dict()  # id -> 学校名称列表
+schoolSettings = dict()  # 后端获取的所有原始数据
+schoolInfo = dict()  # 当前点歌开启状态、歌单等即时信息，不受初始化流程影响。
 
 
 system = Config.parse_obj(get_driver().config)

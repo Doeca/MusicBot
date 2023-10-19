@@ -38,6 +38,7 @@ link_4 = on_regex(
 link_5 = on_regex(
     'https:.*y\.music.*m\/song\?id=([0-9]{1,})&', priority=5, block=True)
 
+
 @link_1.handle()
 async def _(bot: Bot, e: Union[v11GMsgEvent, v12GMsgEvent], link: Annotated[str, RegexStr()]):
     school_id = await config.get_id(str(e.group_id))

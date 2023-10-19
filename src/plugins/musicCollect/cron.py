@@ -94,7 +94,7 @@ async def run_stop_order(school_id):
                 else:
                     wxbot: WXBot = get_bot(config.system.bot_id_wx)
                     await wxbot.call_api("wx.set_group_nickname", group_id=gid, nickname=setting['cardname'])
-                    await wxbot.send_message(message_type="group", group_id=gid,
+                    await wxbot.send_message(detail_type="group", group_id=gid,
                                              message=v12Msg("🦭点歌已经结束了哦，大家下次再来吧～"))
         except:
             pass

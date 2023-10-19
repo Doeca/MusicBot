@@ -1,0 +1,21 @@
+{
+    "groups": ["571777125","799422129"],
+    "cardname": "上海大学点歌姬",
+    "bankeywords": ["lost rivers","义勇军"],
+    "timezone": [
+        {
+            "settime": [10, 30, 13, 0],
+            "setdate":[1,2,3,4,5,6,7],
+            "mainlimit":1000,
+            "personlimit":500,
+            "voteneed":5
+        },
+        {
+            "settime": [16, 30, 19, 0],
+            "setdate":[1,2,3,4,5,6,7],
+            "mainlimit":1000,
+            "personlimit":500,
+            "voteneed":5
+        }
+    ]
+}

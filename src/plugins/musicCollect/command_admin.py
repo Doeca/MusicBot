@@ -6,7 +6,7 @@ from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent,PrivateMessageEvent
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
@@ -68,8 +68,11 @@ reload_matcher = on_command("reload", permission=SUPERUSER)
 async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     from . import config
     from . import cron
+    from . import outer_wx
     await config.init_config()
     await cron.init_cron()
+    await outer_wx.wx_close()
+    await outer_wx.init_wx()
     resp = "已重载"
     await bot.send(e, message=resp)
 

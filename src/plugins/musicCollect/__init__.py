@@ -5,11 +5,12 @@ from . import matcher_qq
 from . import outer_api
 from . import command_user
 from . import command_admin
+from . import outer_wx
 import asyncio
 
 asyncio.run(config.init_config())
 asyncio.run(cron.init_cron())
-
+asyncio.run(outer_wx.init_wx())
 """
 初始化流程：
 1. 读取各个学校的设置信息

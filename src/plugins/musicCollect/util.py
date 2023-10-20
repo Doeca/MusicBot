@@ -3,6 +3,7 @@ import datetime
 import json
 import aiohttp
 from . import config
+from . import wxlib
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
 
@@ -10,6 +11,7 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
 def unescape(str: str):
     str = str.replace("\\/", "/")
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
+
 
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
@@ -19,7 +21,8 @@ async def httpGet(url):
                 return data
             else:
                 return None
-            
+
+
 async def httpPost(url, json_data, head={}):
     head['Content-Type'] = 'application/json'  # 设置请求头为 JSON 格式
     async with aiohttp.ClientSession(headers=head) as session:
@@ -29,6 +32,7 @@ async def httpPost(url, json_data, head={}):
                 return response_data
             else:
                 return None
+
 
 async def get_realurl(url):
     async with aiohttp.ClientSession() as session:
@@ -61,7 +65,7 @@ async def get_switch(school_id: str):
     通过schoolid尝试获取schoolInfo，然后get switch_status，如果开启则直接返回开启
     否则去读取学校设置，判断是否在某个时间段里，如果在就执行cron的开启点歌计划
     """
-    if(school_id == ""):
+    if (school_id == ""):
         return False
     info: dict = config.schoolInfo.get(school_id, {})
     if (info.get('switch_status', 0) == 1):
@@ -85,7 +89,7 @@ async def get_switch(school_id: str):
     return False
 
 
-async def addTolist(school_id: str, songid: str, type: str, user_id: int):
+async def addTolist(school_id: str, songid: str, type: str, user_id: str):
     """
     点歌实际处理逻辑，将数据添加到info中，type选填wy或qq
     """
@@ -102,7 +106,6 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
     info: dict = config.schoolInfo.get(school_id, {})
     song_list: list = info.get('song_list', [])
     order_users: dict = info.get('order_users', {})
-    print(order_users)
     if (order_users.get(f"user{user_id}", 0) >= info['tzinfo']['personlimit']):
         return {'code': -3, "msg": f"该时段每人限点{info['tzinfo']['personlimit']}首，你无法继续点歌🫣"}
     if (len(song_list) >= info['tzinfo']['mainlimit']):
@@ -127,11 +130,14 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: int):
         fs.close()
 
     if song_info['id'] >= info['tzinfo']['mainlimit']:
-        botid = config.system.bot_id
-        bot: Bot = get_bot(str(botid))
         setting: dict = config.schoolSettings[school_id]
         for gid in setting['groups']:
-            await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
+            if gid.find("@chatroom") != -1:
+                wxlib.changeCard(gid, '点歌列表已满，努力播放中～')
+            else:
+                botid = config.system.bot_id
+                bot: Bot = get_bot(str(botid))
+                await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
 
     return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}
 

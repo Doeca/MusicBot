@@ -5,6 +5,7 @@ import nonebot
 import asyncio
 from . import config
 from . import util
+from . import wxhandle
 from . import wxlib
 from nonebot.log import logger
 from fastapi import FastAPI, Request
@@ -50,10 +51,13 @@ async def wx_close():
 @app.post("/wxpush")
 async def create_item(req: Request):
     data = await req.body()
-    content = data.decode('utf-8')
-    logger.info(f"收到push请求:{content}")
-
-
+    data = data.decode('utf-8')
+    content = json.loads(s=data)
+    if content['fromUser'].find("@chatroom") != -1:
+        msg: str = content['content']
+        user_id = msg[0:msg.find(':')]
+        msg = msg.replace(f"{user_id}:\n", "")
+        await wxhandle.entrance(content['fromUser'], user_id, msg)
     return {"code": 0, "msg": "success"}
 
 

@@ -71,14 +71,37 @@ async def getWxid():
     return resp['data']['wxid']
 
 
-async def changeCard(gid: str, wxid: str, cardname: str):
+async def changeCard(gid: str, cardname: str):
     url = f"http://{system.wx_host}:{system.wx_port}/api/modifyNickname"
+    botid = await getWxid()
     payload = {
         "chatRoomId": gid,
-        "wxid": wxid,
+        "wxid": botid,
         "nickName": cardname
     }
     resp = await httpPost(url, head={}, json_data=payload)
     if resp == None:
         return ""
     return resp['msg'] == 'success'
+
+
+async def getMemberInfo(user_id):
+    url = f"http://{system.wx_host}:{system.wx_port}/api/getContactProfile"
+    payload = {
+        "wxid": user_id
+    }
+    resp = await httpPost(url, head={}, json_data=payload)
+    if resp == None:
+        return ""
+    return resp['data']
+
+
+async def isAdmin(gid, userid):
+    url = f"http://{system.wx_host}:{system.wx_port}/api/getMemberFromChatRoom"
+    payload = {
+        "chatRoomId": gid
+    }
+    resp = await httpPost(url, head={}, json_data=payload)
+    if resp == None:
+        return ""
+    return resp['data']['admin'].find(userid) != -1

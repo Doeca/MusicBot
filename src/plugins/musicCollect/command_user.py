@@ -1,6 +1,7 @@
 ﻿import json
 from . import util
 from . import config
+from . import wxlib
 from nonebot.log import logger
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
@@ -62,7 +63,7 @@ async def next(e: GroupMessageEvent, bot: Bot):
         return
 
     # 读取权限
-    userid = e.user_id
+    userid = str(e.user_id)
     perm = (SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
     res: bool = await perm(bot, e)
 
@@ -91,7 +92,6 @@ async def next(e: GroupMessageEvent, bot: Bot):
             fs.write(json.dumps(info))
             fs.close()
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
-
 
 
 # 4.谁点的歌
@@ -127,18 +127,26 @@ async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
             await who_matcher.reject(f"歌曲序号：{id}不存在，请重新输入")
     else:
         await who_matcher.finish(f"操作已取消")
-    userid = song_list[id-1]['uin']
-    stranger_info = await bot.get_stranger_info(user_id=userid)
+    userid: str = song_list[id-1]['uin']
     name = f"{song_list[id-1]['name']} - {song_list[id-1]['author']}"
-    resp = f"歌曲《{name}》的点歌人是：{stranger_info['nickname']}({userid})"
+    if userid.find("wx") != -1:
+        userinfo = await wxlib.getMemberInfo(userid)
+        card = f"微信用户 {userinfo['nickname']}({userinfo['account']})"
+    else:
+        stranger_info = await bot.get_stranger_info(user_id=userid)
+        card = f"{stranger_info['nickname']}({userid})"
+    resp = f"歌曲《{name}》的点歌人是：{card}"
+
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 rule_matcher = on_command(
     "rule", aliases={"规则", "点歌规则"})
+
+
 @rule_matcher.handle()
-async def rule(bot: Bot, e:GroupMessageEvent):
+async def rule(bot: Bot, e: GroupMessageEvent):
     school_id = await config.get_id(str(e.group_id))
-    if(school_id == ""):
+    if (school_id == ""):
         return
     setting: dict = config.schoolSettings[school_id]
     resp = "🤘🎵点歌规则：\n"

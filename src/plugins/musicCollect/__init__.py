@@ -10,6 +10,8 @@ import asyncio
 
 asyncio.run(config.init_config())
 asyncio.run(cron.init_cron())
+asyncio.run(outer_wx.wx_close())
+asyncio.run(asyncio.sleep(3))
 asyncio.run(outer_wx.init_wx())
 """
 初始化流程：

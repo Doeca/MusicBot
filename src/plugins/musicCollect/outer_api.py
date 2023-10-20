@@ -4,6 +4,7 @@ import json
 import nonebot
 from . import config
 from . import util
+from . import wxlib
 from nonebot import get_bot
 from nonebot.log import logger
 from pydantic import BaseModel
@@ -26,6 +27,7 @@ templates = Jinja2Templates(directory="./src/plugins/musicCollect/template")
 app.mount(
     "/static", StaticFiles(directory="./src/plugins/musicCollect/static"), name="static")
 logger.info("Web接口创建完成")
+
 
 @app.get("/")
 async def ret_page(request: Request, school_id: str):
@@ -68,7 +70,7 @@ async def read_id(school_id: str):
     # 读取当前学校info，同时替代了开关功能，因为如果这里有数据那么当前肯定处于点歌开启状态
     status = await util.get_switch(school_id)
     info = config.schoolInfo.get(school_id, None)
-    print(school_id)
+
     if (info == None):
         return {"res": '-1'}
     song_list = info['song_list']
@@ -98,11 +100,15 @@ async def play_id(school_id: str, id: int = 1):
     try:
         if id >= 10000:
             v = config.random[id-10000]
+            info["current_song_id"] = id
             info["current_song_title"] = f"{v['name']} - {v['author']}"
-
-            bot: Bot = get_bot(botid)
+            resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
             for gid in setting['groups']:
-                await bot.send_group_msg(group_id=gid, message=f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}")
+                if gid.find("@chatroom") != -1:
+                    await wxlib.sendMsg(gid, resp)
+                else:
+                    bot: Bot = get_bot(botid)
+                    await bot.send_group_msg(group_id=gid, message=resp)
             return v
 
         song_list = info['song_list']
@@ -116,9 +122,13 @@ async def play_id(school_id: str, id: int = 1):
                     fs.write(json.dumps(info))
                     fs.close()
 
-                bot: Bot = get_bot(str(botid))
+                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
                 for gid in setting['groups']:
-                    await bot.send_group_msg(group_id=gid, message=f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}")
+                    if gid.find("@chatroom") != -1:
+                        await wxlib.sendMsg(gid, resp)
+                    else:
+                        bot: Bot = get_bot(botid)
+                        await bot.send_group_msg(group_id=gid, message=resp)
                 return v
     except:
         return {"res": '-1'}

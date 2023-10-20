@@ -1,6 +1,7 @@
 ﻿import base64
 from . import util
 from . import config
+import asyncio
 from nonebot.log import logger
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
@@ -72,6 +73,7 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     await config.init_config()
     await cron.init_cron()
     await outer_wx.wx_close()
+    await asyncio.sleep(3)
     await outer_wx.init_wx()
     resp = "已重载"
     await bot.send(e, message=resp)

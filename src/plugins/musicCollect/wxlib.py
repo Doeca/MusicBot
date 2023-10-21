@@ -23,8 +23,8 @@ async def hookSyncMsg():
     payload = {
         "port": "19099",
         "ip": "127.0.0.1",
-        "url": f"http://{system.local_host}:{system.local_port}/wxpush",
-        "timeout": "3000",
+        "url": "http://127.0.0.1:19099/wxpush",
+        "timeout": "15000",
         "enableHttp": "1"
     }
     resp = await httpPost(url, json_data=payload)

@@ -22,31 +22,6 @@ app.add_middleware(
 )
 
 
-async def init_wx():
-    # 微信初始化hook
-    res = await wxlib.hookSyncMsg()
-    for i in range(0, 5):
-        if res == True:
-            logger.info("[Wxhelper] hook请求成功")
-            return
-        else:
-            res = await wxlib.hookSyncMsg()
-            await asyncio.sleep(1)
-    logger.error("[Wxhelper] hook请求失败")
-
-
-async def wx_close():
-    res = await wxlib.unhookSyncMsg()
-    for i in range(0, 5):
-        if res == True:
-            logger.info("[Wxhelper] unhook请求成功")
-            return
-        else:
-            res = await wxlib.unhookSyncMsg()
-            await asyncio.sleep(1)
-    logger.error("[Wxhelper] unhook请求失败")
-
-
 @app.post("/wxpush")
 async def create_item(req: Request):
     data = await req.body()

@@ -25,7 +25,7 @@ async def hookSyncMsg():
         "ip": "10.253.33.253",
         "url": "http://10.253.33.253:19099/wxpush",
         "timeout": "15000",
-        "enableHttp": "1"
+        "enableHttp": "0"
     }
     resp = await httpPost(url, json_data=payload)
     if resp == None:

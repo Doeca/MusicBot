@@ -35,7 +35,6 @@ async def init_wx():
     logger.error("[Wxhelper] hook请求失败")
 
 
-@app.on_event("shutdown")
 async def wx_close():
     res = await wxlib.unhookSyncMsg()
     for i in range(0, 5):

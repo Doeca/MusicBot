@@ -30,7 +30,7 @@ async def hookSyncMsg():
     resp = await httpPost(url, json_data=payload)
     if resp == None:
         return False
-    return resp['msg'] == 'success'
+    return resp
 
 
 async def unhookSyncMsg():
@@ -40,7 +40,7 @@ async def unhookSyncMsg():
     resp = await httpPost(url, head=headers, json_data=payload)
     if resp == None:
         return False
-    return resp['msg'] == 'success'
+    return resp
 
 
 async def sendMsg(gid: str, msg: str, user_id: str = ""):

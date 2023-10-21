@@ -80,18 +80,22 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
 
 
 hook_matcher = on_command("hook", permission=SUPERUSER)
+
+
 @hook_matcher.handle()
 async def hook_handle(bot: Bot, e: PrivateMessageEvent):
-    from . import outer_wx
-    res = await outer_wx.init_wx()
+    from . import wxlib
+    res = await wxlib.hookSyncMsg()
     resp = f"hook结果:{res}"
     await bot.send(e, message=resp)
 
 unhook_matcher = on_command("unhook", permission=SUPERUSER)
+
+
 @unhook_matcher.handle()
 async def unhook_handle(bot: Bot, e: PrivateMessageEvent):
-    from . import outer_wx
-    res = await outer_wx.wx_close()
+    from . import wxlib
+    res = await wxlib.unhookSyncMsg()
     resp = f"unhook结果:{res}"
     await bot.send(e, message=resp)
 

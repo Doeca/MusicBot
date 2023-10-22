@@ -69,12 +69,8 @@ reload_matcher = on_command("reload", permission=SUPERUSER)
 async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     from . import config
     from . import cron
-    from . import outer_wx
     await config.init_config()
     await cron.init_cron()
-    await outer_wx.wx_close()
-    await asyncio.sleep(3)
-    await outer_wx.init_wx()
     resp = "已重载"
     await bot.send(e, message=resp)
 

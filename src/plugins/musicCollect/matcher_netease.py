@@ -59,7 +59,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
     if status == False:
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
-    songid = link[1]
+    songid = link[0]
     res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 

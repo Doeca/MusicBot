@@ -184,6 +184,16 @@ async def next_handle(school_id: str, gid: str, user_id: str, match):
 
 
 async def qq_matcher(content: str):
+    # 格式一
+    match = re.search(
+        'https:\/\/c6.y.qq.com\/base\/fcgi-bin\/u\?__=([a-zA-Z0-9]{10,15})', content)
+    if match != None:
+        resp = await util.httpGet(match.group(0))
+        matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
+        if matchObj != None:
+            return matchObj.group(1)
+
+    # 可以直接获取songmid的格式
     reg_str = [
         "<dataurl>.*?songmid=(.*?)&.*?</dataurl>"
     ]
@@ -195,6 +205,16 @@ async def qq_matcher(content: str):
 
 
 async def wyy_matcher(content: str):
+
+    # 特殊格式一
+    match = re.search('http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}', content)
+    if match != None:
+        link = await util.get_realurl(match.group(0))
+        matches = re.search('&id=([0-9]{1,})', link)
+        if matches != None:
+            return matches.group(1)
+        
+    # 可以直接取到songid的格式
     reg_str = [
         "http.*?music\.163\.com.*?&amp;id=([0-9]{1,})",
         "https:.*y\.music.*m\/song\?id=([0-9]{1,})&"

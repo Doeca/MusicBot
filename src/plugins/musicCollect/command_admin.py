@@ -41,7 +41,7 @@ async def volume_got(e: GroupMessageEvent, arg: str = ArgStr('arg')):
         volume = float(volume)
         if (volume > 1):
             volume = volume*0.01
-    util.addOperation(school_id, "volume", volume)
+    await util.addOperation(school_id, "volume", volume)
     await volume_matcher.finish(f"已将音量调整为{rarg}")
 
 

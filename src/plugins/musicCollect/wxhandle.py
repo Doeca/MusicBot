@@ -57,7 +57,7 @@ async def help_handle(school_id: str, gid: str, user_id: str, match):
     if not res:
         return
     volume = float(match.group(1))
-    util.addOperation(school_id, "volume", volume*0.01)
+    await util.addOperation(school_id, "volume", volume*0.01)
     resp = f"已将音量调整为{volume}%"
     await wxlib.sendMsg(gid, resp, user_id)
 

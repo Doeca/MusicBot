@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from nonebot import logger
 import asyncio
 options = webdriver.ChromeOptions()
+options.binary_location = "/usr/bin/google-chrome"
 options.add_argument('--headless=new')
 browser = None
 temp_str = ""

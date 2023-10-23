@@ -32,6 +32,9 @@ function aplayer1() {
     window.ap1.on('ended', () => {
         playStatus = 0;
     })
+    window.ap1.on('error', () => {
+        playStatus = 0;
+    })
 }
 
 function player() {

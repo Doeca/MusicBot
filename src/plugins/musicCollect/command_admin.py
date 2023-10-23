@@ -1,8 +1,7 @@
 ﻿import base64
 from . import util
 from . import config
-import asyncio
-from . import login
+import json
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
@@ -94,12 +93,12 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
 
 
 login_matcher = on_command("login", permission=SUPERUSER)
-
-
 @login_matcher.handle()
 async def login_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message="正在处理，请稍后")
-    resp = login.getImgUrl()
+    apiUrl = config.system.music_api
+    resp = await util.httpGet(f"{apiUrl}/login")
+    resp = json.loads(s=resp)
     if resp['res'] == -1:
         await bot.send(e, message=resp['msg'])
     else:
@@ -111,10 +110,10 @@ getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
 @getcookie_matcher.handle()
 async def login_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message="正在处理，请稍后")
-    resp = login.getCookie()
+    apiUrl = config.system.music_api
+    resp = await util.httpGet(f"{apiUrl}/getCookie")
+    resp = json.loads(s=resp)
     await bot.send(e, message=resp['msg'])
-
-
 hook_matcher = on_command("hook", permission=SUPERUSER)
 
 

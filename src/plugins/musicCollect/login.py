@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from nonebot import logger
-import asyncio
+import time
 options = webdriver.ChromeOptions()
 options.add_argument('--no-sandbox')
 options.add_argument('--headless')
@@ -24,7 +24,7 @@ def dots(func):
                     return False
                 else:
                     logger.info(f"{func.__name__}执行出错，正在重试......")
-                    asyncio.run(asyncio.sleep(0.5))
+                    time.sleep(1)
         return True
     return wrapper
 
@@ -83,9 +83,10 @@ def getImgUrl():
     src = ""
     try:
         src = strProcedure(click_login, switch_frame, switch_frame2, img_get)
-    except:
+    except Exception as e:
         browser.quit()
         browser = None
+        logger.debug(f"错误数据:{e}")
         return {'res': -1, 'msg': '执行出错，请之后重试'}
     return {'res': 0, 'msg': src}
 

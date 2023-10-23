@@ -54,12 +54,12 @@ function player() {
                         await sleep(delay);
 
                     } catch (err) {
-                        try {
-                            let text = `school_id:${school_id}\ncurrentID:${currentID}\nplayStatus:${playStatus}\nerr:${err}\nstage:${stage}`
-                            text = window.btoa(text)
-                            await fetch(`${apiUrl}/notify?text=${text}`, { mode: "cors" }).catch(err => { })
-                        } catch (error) {
-                        }
+                        // try {
+                        //     let text = `school_id:${school_id}\ncurrentID:${currentID}\nplayStatus:${playStatus}\nerr:${err}\nstage:${stage}`
+                        //     text = window.btoa(text)
+                        //     await fetch(`${apiUrl}/notify?text=${text}`, { mode: "cors" }).catch(err => { })
+                        // } catch (error) {
+                        // }
                     }
                 }
 

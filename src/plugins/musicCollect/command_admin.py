@@ -2,12 +2,12 @@
 from . import util
 from . import config
 import asyncio
+from . import login
 from nonebot.log import logger
-from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent, Message, MessageSegment
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
@@ -62,6 +62,24 @@ async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg'
     await util.httpGet(f"{apiUrl}/update_cookie?raw={raw}")
     await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
 
+qqcookie_matcher = on_command("qqcookie", permission=SUPERUSER)
+
+
+@qqcookie_matcher.handle()
+async def cookieUploadPre(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
+    cookie = args.extract_plain_text().strip()
+    if cookie != '':
+        matcher.set_arg("arg", cookie)
+
+
+@qqcookie_matcher.got("arg", prompt="请输入qqcookie文本")
+async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg')):
+    apiUrl = config.system.music_api
+    raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
+    await util.httpGet(f"{apiUrl}/update_qqcookie?raw={raw}")
+    await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
+
+
 reload_matcher = on_command("reload", permission=SUPERUSER)
 
 
@@ -73,6 +91,28 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     await cron.init_cron()
     resp = "已重载"
     await bot.send(e, message=resp)
+
+
+login_matcher = on_command("login", permission=SUPERUSER)
+
+
+@login_matcher.handle()
+async def login_handle(bot: Bot, e: PrivateMessageEvent):
+    await bot.send(e, message="正在处理，请稍后")
+    resp = login.getImgUrl()
+    if resp['res'] == -1:
+        await bot.send(e, message=resp['msg'])
+    else:
+        await bot.send(e, message="请及时登录,然后发送/getcookie命令")
+        await bot.send(e, message=Message(MessageSegment.image(resp['msg'])))
+getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
+
+
+@getcookie_matcher.handle()
+async def login_handle(bot: Bot, e: PrivateMessageEvent):
+    await bot.send(e, message="正在处理，请稍后")
+    resp = login.getCookie()
+    await bot.send(e, message=resp['msg'])
 
 
 hook_matcher = on_command("hook", permission=SUPERUSER)

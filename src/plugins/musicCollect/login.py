@@ -4,7 +4,8 @@ from nonebot import logger
 import asyncio
 options = webdriver.ChromeOptions()
 options.binary_location = "/usr/bin/google-chrome"
-options.add_argument('--headless=new')
+options.add_argument('--no-sandbox')
+options.add_argument('--headless')
 browser = None
 temp_str = ""
 

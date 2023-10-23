@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from nonebot import logger
 import asyncio
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')
@@ -15,13 +16,13 @@ def dots(func):
             try:
                 func(*args, **kwargs)
                 result = True
-                print(f"{func.__name__}执行完成")
+                logger.info(f"{func.__name__}执行完成")
             except:
                 id = id+1
                 if (id == 10):
                     return False
                 else:
-                    print(f"{func.__name__}执行出错，正在重试......")
+                    logger.info(f"{func.__name__}执行出错，正在重试......")
                     asyncio.run(asyncio.sleep(0.5))
         return True
     return wrapper

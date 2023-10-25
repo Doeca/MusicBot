@@ -105,3 +105,16 @@ async def isAdmin(gid, userid):
     if resp == None:
         return ""
     return resp['data']['admin'].find(userid) != -1
+
+
+async def getContacts():
+    url = f"http://{system.wx_host}:{system.wx_port}/api/getContactList"
+    resp = await httpPost(url, head={}, json_data={})
+    if resp == None:
+        return ""
+    l = []
+    for v in resp['data']:
+        if v['wxid'].find("@chatroom") == -1:
+            continue
+        l.append({"gid": v['wxid'], "name": v['nickname']})
+    return l

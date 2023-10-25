@@ -93,6 +93,8 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
 
 
 login_matcher = on_command("login", permission=SUPERUSER)
+
+
 @login_matcher.handle()
 async def login_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message="正在处理，请稍后")
@@ -133,5 +135,14 @@ async def unhook_handle(bot: Bot, e: PrivateMessageEvent):
     res = await wxlib.unhookSyncMsg()
     resp = f"unhook结果:{res}"
     await bot.send(e, message=resp)
+
+
+wxgroup_matcher = on_command("wxgroup", permission=SUPERUSER)
+@wxgroup_matcher.handle()
+async def wxgroup_handle(bot: Bot, e: PrivateMessageEvent):
+    from . import wxlib
+    res = await wxlib.getContacts()
+    await bot.send(e, message=json.dumps(res))
+
 
 logger.info("管理端命令加载完成")

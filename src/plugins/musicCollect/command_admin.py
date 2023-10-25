@@ -138,11 +138,13 @@ async def unhook_handle(bot: Bot, e: PrivateMessageEvent):
 
 
 wxgroup_matcher = on_command("wxgroup", permission=SUPERUSER)
+
+
 @wxgroup_matcher.handle()
 async def wxgroup_handle(bot: Bot, e: PrivateMessageEvent):
     from . import wxlib
     res = await wxlib.getContacts()
-    await bot.send(e, message=json.dumps(res))
+    await bot.send(e, message=json.dumps(res, ensure_ascii=False))
 
 
 logger.info("管理端命令加载完成")

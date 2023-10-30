@@ -195,7 +195,8 @@ async def qq_matcher(content: str):
 
     # 可以直接获取songmid的格式
     reg_str = [
-        "<dataurl>.*?songmid=(.*?)&.*?</dataurl>"
+        "<dataurl>.*?songmid=(.*?)&.*?</dataurl>",
+        "<url>.*qq\.com/v8.*songmid=(.*?)&amp;type=0&.*?</url>"
     ]
     for rs in reg_str:
         match = re.search(rs, content)

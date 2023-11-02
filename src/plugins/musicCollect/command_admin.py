@@ -109,6 +109,20 @@ async def login_handle(bot: Bot, e: PrivateMessageEvent):
 getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
 
 
+status_matcher = on_command("status", permission=SUPERUSER)
+
+
+@status_matcher.handle()
+async def status_handle(bot: Bot, e: PrivateMessageEvent):
+    await bot.send(e, message="正在处理，请稍后")
+    apiUrl = config.system.music_api
+    resp = await util.httpGet(f"{apiUrl}/status")
+    resp = json.loads(s=resp)
+    await bot.send(e, message=f"status:\nqq:{resp['qq']}\nwy:{resp['wy']}")
+
+getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
+
+
 @getcookie_matcher.handle()
 async def login_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message="正在处理，请稍后")

@@ -102,8 +102,19 @@ async def play_id(school_id: str, id: int = 1):
             v = config.random[id-10000]
             info["current_song_id"] = id
             info["current_song_title"] = f"{v['name']} - {v['author']}"
+            
             resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
+            card = f"当前：{v['name']} - {v['author']}"
             for gid in setting['groups']:
+                # 若开启静默模式则不发送消息，只修改群名片
+                if info["tzinfo"].get("quietmode", 0) == 1:
+                    if gid.find("@chatroom") != -1:
+                        await wxlib.changeCard(gid, card)
+                    else:
+                        bot: Bot = get_bot(botid)
+                        await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                    continue
+                
                 if gid.find("@chatroom") != -1:
                     await wxlib.sendMsg(gid, resp)
                 else:
@@ -123,7 +134,18 @@ async def play_id(school_id: str, id: int = 1):
                     fs.close()
 
                 resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
+                card = f"当前：{v['name']} - {v['author']}"
+
                 for gid in setting['groups']:
+                    # 若开启静默模式则不发送消息，只修改群名片
+                    if info["tzinfo"].get("quietmode", 0) == 1:
+                        if gid.find("@chatroom") != -1:
+                            await wxlib.changeCard(gid, card)
+                        else:
+                            bot: Bot = get_bot(botid)
+                            await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                        continue
+                
                     if gid.find("@chatroom") != -1:
                         await wxlib.sendMsg(gid, resp)
                     else:

@@ -22,9 +22,11 @@ import asyncio
 2、点歌总数量上限  mainlimit
 3、个人点歌数量上限 personlimit
 4、投票切割所需票数 voteneed
+5、静默模式 quietmode
 
 
 info字段
+
 
 switch_status 点歌开启状态
 song_list 歌曲列表

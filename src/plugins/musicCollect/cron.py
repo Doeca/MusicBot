@@ -29,6 +29,8 @@ async def run_start_order(school_id, tzinfo: dict):
         weekday_number = datetime.date.today().weekday() + 1
         if (weekday_number not in tzinfo['setdate']):
             return
+        
+        # 判断当前日期是否为假日或开关情况
 
         set_time = tzinfo['settime']
         date_r = time.strftime(f"%m_%d", time.localtime())

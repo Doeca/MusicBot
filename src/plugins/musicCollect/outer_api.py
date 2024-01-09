@@ -85,6 +85,7 @@ async def read_id(school_id: str):
 
 @app.get("/getPlayInfo")
 async def play_id(school_id: str, id: int = 1):
+    # 2024 1月5日记录：这个版本的设计下，如果bot端离线则不能正常播放歌曲，需要调整
     status = await util.get_switch(school_id)
     info = config.schoolInfo.get(school_id, None)
     if (info == None):
@@ -97,14 +98,14 @@ async def play_id(school_id: str, id: int = 1):
     info['vote_num'] = 0
     info['vote_list'] = list()
 
-    try:
-        if id >= 10000:
-            v = config.random[id-10000]
-            info["current_song_id"] = id
-            info["current_song_title"] = f"{v['name']} - {v['author']}"
-            
-            resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
-            card = f"当前：{v['name']} - {v['author']}"
+    if id >= 10000:
+        v = config.random[id-10000]
+        info["current_song_id"] = id
+        info["current_song_title"] = f"{v['name']} - {v['author']}"
+
+        resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
+        card = f"当前：{v['name']} - {v['author']}"
+        try:
             for gid in setting['groups']:
                 # 若开启静默模式则不发送消息，只修改群名片
                 if info["tzinfo"].get("quietmode", 0) == 1:
@@ -114,28 +115,30 @@ async def play_id(school_id: str, id: int = 1):
                         bot: Bot = get_bot(botid)
                         await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                     continue
-                
                 if gid.find("@chatroom") != -1:
                     await wxlib.sendMsg(gid, resp)
                 else:
                     bot: Bot = get_bot(botid)
                     await bot.send_group_msg(group_id=gid, message=resp)
-            return v
+        except:
+            logger.error("发送消息失败，可能是bot离线了")
+            pass
+        return v
 
-        song_list = info['song_list']
-        for v in song_list:
-            if (v['id'] == id):
-                async with config.lock:
-                    v['played'] = 1
-                    info["current_song_id"] = id
-                    info["current_song_title"] = f"{v['name']} - {v['author']}"
-                    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-                    fs.write(json.dumps(info))
-                    fs.close()
+    song_list = info['song_list']
+    for v in song_list:
+        if (v['id'] == id):
+            async with config.lock:
+                v['played'] = 1
+                info["current_song_id"] = id
+                info["current_song_title"] = f"{v['name']} - {v['author']}"
+                fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+                fs.write(json.dumps(info))
+                fs.close()
 
-                resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
-                card = f"当前：{v['name']} - {v['author']}"
-
+            resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
+            card = f"当前：{v['name']} - {v['author']}"
+            try:
                 for gid in setting['groups']:
                     # 若开启静默模式则不发送消息，只修改群名片
                     if info["tzinfo"].get("quietmode", 0) == 1:
@@ -145,15 +148,16 @@ async def play_id(school_id: str, id: int = 1):
                             bot: Bot = get_bot(botid)
                             await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                         continue
-                
+
                     if gid.find("@chatroom") != -1:
                         await wxlib.sendMsg(gid, resp)
                     else:
                         bot: Bot = get_bot(botid)
                         await bot.send_group_msg(group_id=gid, message=resp)
-                return v
-    except:
-        return {"res": '-1'}
+            except:
+                logger.error("发送消息失败，可能是bot离线了")
+                pass
+            return v
     return {"res": '-1'}
 
 

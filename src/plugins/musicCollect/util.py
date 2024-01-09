@@ -4,7 +4,7 @@ import json
 import aiohttp
 from . import config
 from . import wxlib
-from nonebot import get_bot
+from nonebot import get_bot,logger
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
 
 
@@ -59,6 +59,21 @@ async def is_black(school_id: str, name: str):
     return False
 
 
+async def get_bot(school_id: str):
+    setting: dict = config.schoolSettings[school_id]
+    botids: list = setting.get('botids', ["1563790049","1687708097"])
+    for botid in botids:
+        try:
+            bot: Bot = get_bot(str(botid))
+            if bot != None:
+                return bot
+        except:
+            pass
+    logger.error(f"获取bot失败，所有bot均已下线")
+    return None
+    
+    
+
 async def get_switch(school_id: str):
     # 获取当前点歌状态
     """
@@ -70,14 +85,13 @@ async def get_switch(school_id: str):
     info: dict = config.schoolInfo.get(school_id, {})
     if (info.get('switch_status', 0) == 1):
         return True
-    # print("学校id", school_id)
-    # print(config.schoolSettings)
     setting: dict = config.schoolSettings[school_id]
     now_time = int(time.strftime("%H", time.localtime()))*60 + \
         int(time.strftime("%M", time.localtime()))
     weekday_number = datetime.date.today().weekday() + 1
 
     # 点歌时间段内会自动开启，点歌时间段外不能自动关闭，防止手动开启点歌等情况
+    # 同一个点歌时间段，配合不同的星期数，可以设置多个点歌时间段
     for tzinfo in setting['timezone']:
         set_time = tzinfo['settime']
         minute_start = set_time[0] * 60 + set_time[1]

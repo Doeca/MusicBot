@@ -118,6 +118,9 @@ async def init_cron():
             set_time = tzinfo['settime']
 
             # 传递当前时段的设置信息给启动任务
+            # 此架构从设计上来说是可以在相同的时间段内开启多个点歌任务的
+            # 但是这样会导致数据的混乱，所以不允许这样做
+            # 可以通过设置不同的星期数来实现多个时段的点歌任务
             jobs_id = id + "_" + str(random.randint(10000, 99999))
             scheduler.add_job(run_start_order, "cron",
                               hour=set_time[0], minute=set_time[1], id=f"{jobs_id}",  args=[id, tzinfo])

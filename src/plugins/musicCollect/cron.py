@@ -61,12 +61,14 @@ async def run_start_order(school_id, tzinfo: dict):
             config.schoolInfo[school_id]['current_song_title'] = ""
 
        
+
         resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦"
         for gid in setting['groups']:
             if gid.find("@chatroom") != -1:
                 await wxlib.changeCard(gid, "激情点歌ing")
                 await wxlib.sendMsg(gid, resp)
             else:
+                # 读取设置中的机器人号码
                 botid = config.system.bot_id
                 bot: Bot = get_bot(botid)
                 await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')

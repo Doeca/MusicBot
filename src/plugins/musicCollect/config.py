@@ -67,6 +67,7 @@ fs.close()
 
 
 async def get_schoolList():
+    # 原本的从后端获取数据，因为后端获取数据还没做，就先用本地替代了
     # async with aiohttp.ClientSession() as session:
     #     async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
     #         if (resp.status != 200):

@@ -60,6 +60,8 @@ async def is_black(school_id: str, name: str):
 
 
 async def get_bot(school_id: str):
+    # 问题：不确定如果机器人掉线了还能否get到bot实例
+    # 测试方案：
     setting: dict = config.schoolSettings[school_id]
     botids: list = setting.get('botids', ["1563790049","1687708097"])
     for botid in botids:

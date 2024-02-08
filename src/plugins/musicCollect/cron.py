@@ -69,7 +69,7 @@ async def run_start_order(school_id, tzinfo: dict):
             else:
                 bot: Bot = await get_bot()
                 botid = (await bot.call_api("get_login_info"))['user_id']
-                # await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
+                await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
                 await bot.send_group_msg(group_id=gid,
                                          message=resp)
 
@@ -92,7 +92,7 @@ async def run_stop_order(school_id):
                 else:
                     bot: Bot = get_bot()
                     botid = (await bot.call_api("get_login_info"))['user_id']
-                    # await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
+                    await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
                     await bot.send_group_msg(group_id=gid, message=resp)
         except:
             pass

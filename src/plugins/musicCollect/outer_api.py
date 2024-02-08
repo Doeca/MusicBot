@@ -113,7 +113,7 @@ async def play_id(school_id: str, id: int = 1):
                     else:
                         bot: Bot = await get_bot()
                         botid = (await bot.call_api("get_login_info"))['user_id']
-                        # await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                        await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                     continue
                 if gid.find("@chatroom") != -1:
                     await wxlib.sendMsg(gid, resp)
@@ -146,7 +146,7 @@ async def play_id(school_id: str, id: int = 1):
                             await wxlib.changeCard(gid, card)
                         else:
                             bot: Bot = await get_bot()
-                            # await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                            await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                         continue
 
                     if gid.find("@chatroom") != -1:

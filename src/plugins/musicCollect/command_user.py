@@ -158,7 +158,7 @@ async def rule(bot: Bot, e: GroupMessageEvent):
         resp += f"{id}. {time[0]}--{time[1]}\n"
         resp += f" 歌单上限{v['mainlimit']}首，每人限点{v['personlimit']}首\n"
     
-    resp += "🧿支持平台: QQ音乐、网易云音乐"
+    resp += "🧿支持平台: QQ音乐、网易云音乐、酷狗音乐"
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 logger.info("用户端命令加载完成")

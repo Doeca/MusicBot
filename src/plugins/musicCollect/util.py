@@ -168,7 +168,7 @@ async def addTolist(bot_para, school_id: str, songid: str, type: str, user_id: s
             else:
                 bot: Bot = bot_para
                 botid = (await bot.call_api("get_login_info"))['user_id']
-                # await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
+                await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
 
     return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}
 

@@ -4,8 +4,10 @@ import json
 import aiohttp
 from . import config
 from . import wxlib
-from nonebot import get_bot,logger
+from nonebot import get_bot as nbget_bot
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
+import asyncio
 
 
 def unescape(str: str):
@@ -58,23 +60,36 @@ async def is_black(school_id: str, name: str):
             return True
     return False
 
+lock = asyncio.Lock()
 
-async def get_bot(school_id: str):
-    # 问题：不确定如果机器人掉线了还能否get到bot实例
-    # 测试方案：
-    setting: dict = config.schoolSettings[school_id]
-    botids: list = setting.get('botids', ["1563790049","1687708097"])
-    for botid in botids:
+
+async def get_bot():
+    # 方案已废弃，不再使用
+
+    # 使用本函数意味着事件源不来自QQ，为自行创建的事件（例如定时任务）
+    # 调用地方：
+    # 1. 定时任务开启任务、关闭任务
+    # 2. WebAPI播报当前歌曲
+    # 3. Wechat “谁点的”命令获取点歌人的信息
+
+    # botid为shamrock中默认登录的那个qq号，也就是bot_ids的第一个qq号，通过pop读取然后丢弃，如果这个账号出现问题需要切换，那么再从后续的id中读取
+    async with lock:
+        bot: Bot = nbget_bot()
+        # 如果这里是None的话说明Shamrock已经丢失连接了
+        if bot == None:
+            logger.error("Shamrock已掉线，无法正常通信")
+            return None
         try:
-            bot: Bot = get_bot(str(botid))
-            if bot != None:
-                return bot
+            await bot.call_api("get_stranger_info", user_id=1124468334)
+            logger.info("账号正常")
         except:
-            pass
-    logger.error(f"获取bot失败，所有bot均已下线")
-    return None
-    
-    
+            # 如果调用失败则需要切换账号
+            await bot.call_api("switch_account", user_id=config.system.bot_ids.pop(0))
+            logger.info("账号切换请求已完成")
+            await asyncio.sleep(3)
+            await bot.send_private_msg(user_id=1124468334, message=f"Shamrock原账号已掉线，已自动切换账号为本号")
+        return bot
+
 
 async def get_switch(school_id: str):
     # 获取当前点歌状态
@@ -105,7 +120,7 @@ async def get_switch(school_id: str):
     return False
 
 
-async def addTolist(school_id: str, songid: str, type: str, user_id: str):
+async def addTolist(bot_para, school_id: str, songid: str, type: str, user_id: str):
     """
     点歌实际处理逻辑，将数据添加到info中，type选填wy或qq
     """
@@ -151,9 +166,9 @@ async def addTolist(school_id: str, songid: str, type: str, user_id: str):
             if gid.find("@chatroom") != -1:
                 wxlib.changeCard(gid, '点歌列表已满，努力播放中～')
             else:
-                botid = config.system.bot_id
-                bot: Bot = get_bot(str(botid))
-                await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
+                bot: Bot = bot_para
+                botid = (await bot.call_api("get_login_info"))['user_id']
+                # await bot.set_group_card(group_id=gid, user_id=botid, card='点歌列表已满，努力播放中～')
 
     return {'code': 0, "msg": f"🥳点歌成功，点歌序号：{song_info['id']}/{info['tzinfo']['mainlimit']}"}
 

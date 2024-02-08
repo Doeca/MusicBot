@@ -6,10 +6,11 @@ import json
 import asyncio
 from . import config
 from . import wxlib
+from . import util
+from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot_plugin_apscheduler import scheduler
 from nonebot.log import logger
-from nonebot import get_bot
 from nonebot import require
 require("nonebot_plugin_apscheduler")
 
@@ -29,7 +30,7 @@ async def run_start_order(school_id, tzinfo: dict):
         weekday_number = datetime.date.today().weekday() + 1
         if (weekday_number not in tzinfo['setdate']):
             return
-        
+
         # 判断当前日期是否为假日或开关情况
 
         set_time = tzinfo['settime']
@@ -60,18 +61,15 @@ async def run_start_order(school_id, tzinfo: dict):
             config.schoolInfo[school_id]['current_song_id'] = 0
             config.schoolInfo[school_id]['current_song_title'] = ""
 
-       
-
         resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦"
         for gid in setting['groups']:
             if gid.find("@chatroom") != -1:
                 await wxlib.changeCard(gid, "激情点歌ing")
                 await wxlib.sendMsg(gid, resp)
             else:
-                # 读取设置中的机器人号码
-                botid = config.system.bot_id
-                bot: Bot = get_bot(botid)
-                await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
+                bot: Bot = await get_bot()
+                botid = (await bot.call_api("get_login_info"))['user_id']
+                # await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
                 await bot.send_group_msg(group_id=gid,
                                          message=resp)
 
@@ -92,9 +90,9 @@ async def run_stop_order(school_id):
                     await wxlib.changeCard(gid, "激情点歌ing")
                     await wxlib.sendMsg(gid, resp)
                 else:
-                    botid = config.system.bot_id
-                    bot: Bot = get_bot(botid)
-                    await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
+                    bot: Bot = get_bot()
+                    botid = (await bot.call_api("get_login_info"))['user_id']
+                    # await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
                     await bot.send_group_msg(group_id=gid, message=resp)
         except:
             pass

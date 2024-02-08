@@ -93,7 +93,6 @@ async def play_id(school_id: str, id: int = 1):
 
     # 读取必要设置
     setting: dict = config.schoolSettings[school_id]
-    botid = config.system.bot_id
 
     info['vote_num'] = 0
     info['vote_list'] = list()
@@ -112,16 +111,17 @@ async def play_id(school_id: str, id: int = 1):
                     if gid.find("@chatroom") != -1:
                         await wxlib.changeCard(gid, card)
                     else:
-                        bot: Bot = get_bot(botid)
-                        await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                        bot: Bot = await get_bot()
+                        botid = (await bot.call_api("get_login_info"))['user_id']
+                        # await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                     continue
                 if gid.find("@chatroom") != -1:
                     await wxlib.sendMsg(gid, resp)
                 else:
-                    bot: Bot = get_bot(botid)
+                    bot: Bot = await get_bot()
                     await bot.send_group_msg(group_id=gid, message=resp)
-        except:
-            logger.error("发送消息失败，可能是bot离线了")
+        except Exception as e:
+            logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
             pass
         return v
 
@@ -145,17 +145,17 @@ async def play_id(school_id: str, id: int = 1):
                         if gid.find("@chatroom") != -1:
                             await wxlib.changeCard(gid, card)
                         else:
-                            bot: Bot = get_bot(botid)
-                            await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                            bot: Bot = await get_bot()
+                            # await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                         continue
 
                     if gid.find("@chatroom") != -1:
                         await wxlib.sendMsg(gid, resp)
                     else:
-                        bot: Bot = get_bot(botid)
+                        bot: Bot = await get_bot()
                         await bot.send_group_msg(group_id=gid, message=resp)
-            except:
-                logger.error("发送消息失败，可能是bot离线了")
+            except Exception as e:
+                logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
                 pass
             return v
     return {"res": '-1'}
@@ -181,8 +181,24 @@ async def get_operations(school_id: str):
 # 通知接口，可通过此接口向我发送通知
 @app.get("/notify")
 async def get_operations(text: str):
-    botid = config.system.bot_id
-    bot: Bot = get_bot(botid)
+    bot: Bot = await get_bot()
     await bot.send_private_msg(user_id=1124468334,
                                message=base64.b64decode(text).decode("utf-8"))
+    return {"res": 0}
+
+
+# 测试接口，通过此接口测试nonebot行为
+@app.get("/action_test")
+async def _():
+    # botids: list = [1687708097, 1563790049, 2119302278]
+    # for botid in botids:
+    #     try:
+    #         bot: Bot = get_bot(str(botid))
+    #         if bot != None:
+    #             return bot
+    #     except:
+    #         pass
+    bot: Bot = nonebot.get_bot()
+    res = await bot.call_api("get_stranger_info", user_id=1124468334)
+    print(f"res:{res}")
     return {"res": 0}

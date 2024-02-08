@@ -41,7 +41,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
     resp = await util.httpGet(link)
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
-    res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
+    res = await util.addTolist(bot, school_id, songmid, 'qq', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
@@ -57,7 +57,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
     resp = await util.httpGet(rawlink)
     matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
     songmid = matchObj.group(1)
-    res = await util.addTolist(school_id, songmid, 'qq', str(e.user_id))
+    res = await util.addTolist(bot, school_id, songmid, 'qq', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 logger.info("QQ音乐监听器创建完成")

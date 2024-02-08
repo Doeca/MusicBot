@@ -45,7 +45,6 @@ class Config(BaseModel, extra=Extra.ignore):
     backend_url: str
     setting_domain: str
     music_api: str
-    bot_id: str
     wx_host: str
     wx_port: int
     local_host: str
@@ -58,7 +57,6 @@ schoolSettings = dict()  # 后端获取的所有原始数据
 schoolInfo = dict()  # 当前点歌开启状态、歌单等即时信息，不受初始化流程影响。
 
 
-system = Config.parse_obj(get_driver().config)
 lock = asyncio.Lock()
 
 fs = open(f"./random.store", 'r')
@@ -96,8 +94,10 @@ async def get_schoolSettings():
         schoolSettings[val] = json.loads(fs.read())
         fs.close()
 
-
+system = Config.parse_obj(get_driver().config)
 async def init_config():
+    global system
+    system = Config.parse_obj(get_driver().config)
     while await get_schoolList() == False:
         time.sleep(1)
     logger.info("学校列表读取完毕")

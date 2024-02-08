@@ -3,7 +3,8 @@ import json
 from . import config
 from . import wxlib
 from . import util
-from nonebot import logger, get_bot
+from nonebot import get_bot
+from nonebot import logger
 
 # 群消息处理
 
@@ -42,9 +43,9 @@ async def music_handle(school_id: str, gid: str, user_id, msg: str):
         await wxlib.sendMsg(gid, "当前不在点歌时间段内，不能点歌哦🥺", user_id)
         return
     if qqid != "":
-        res = await util.addTolist(school_id, qqid, 'qq', user_id)
+        res = await util.addTolist(None, school_id, qqid, 'qq', user_id)
     else:
-        res = await util.addTolist(school_id, wyid, 'wy', user_id)
+        res = await util.addTolist(None, school_id, wyid, 'wy', user_id)
     await wxlib.sendMsg(gid, res['msg'], user_id)
 
 
@@ -103,7 +104,7 @@ async def who_handle(school_id: str, gid: str, user_id: str, match):
         userinfo = await wxlib.getMemberInfo(userid)
         card = f"{userinfo['nickname']}({userinfo['account']})"
     else:
-        bot = get_bot(config.system.bot_id)
+        bot = await get_bot()
         stranger_info = await bot.get_stranger_info(user_id=userid)
         card = f"QQ用户 {stranger_info['nickname']}({userid})"
     resp = f"歌曲《{name}》的点歌人是：{card}"
@@ -214,7 +215,7 @@ async def wyy_matcher(content: str):
         matches = re.search('&id=([0-9]{1,})', link)
         if matches != None:
             return matches.group(1)
-        
+
     # 可以直接取到songid的格式
     reg_str = [
         "http.*?music\.163\.com.*?&amp;id=([0-9]{1,})",

@@ -48,7 +48,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
     if (matches == None):
         return
     songid = matches.group(1)
-    res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
+    res = await util.addTolist(bot, school_id, songid, 'wy', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
@@ -60,7 +60,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[0]
-    res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
+    res = await util.addTolist(bot, school_id, songid, 'wy', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
@@ -72,7 +72,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[0]
-    res = await util.addTolist(school_id, songid, 'wy', str(e.user_id))
+    res = await util.addTolist(bot, school_id, songid, 'wy', str(e.user_id))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
@@ -84,7 +84,7 @@ async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], Reg
         await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
         return
     songid = link[0]
-    res = await util.addTolist(school_id, songid, 'wy', str(str(e.user_id)))
+    res = await util.addTolist(bot, school_id, songid, 'wy', str(str(e.user_id)))
     await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 logger.info("网易云音乐监听器创建完成")

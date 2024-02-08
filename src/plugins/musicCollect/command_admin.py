@@ -106,7 +106,6 @@ async def login_handle(bot: Bot, e: PrivateMessageEvent):
     else:
         await bot.send(e, message="请及时登录,然后发送/getcookie命令")
         await bot.send(e, message=Message(MessageSegment.image(f"base64://{resp['msg']}")))
-getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
 
 
 status_matcher = on_command("status", permission=SUPERUSER)

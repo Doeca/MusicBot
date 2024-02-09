@@ -6,7 +6,6 @@ import json
 import asyncio
 from . import config
 from . import wxlib
-from . import util
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot_plugin_apscheduler import scheduler
@@ -67,7 +66,7 @@ async def run_start_order(school_id, tzinfo: dict):
                 await wxlib.changeCard(gid, "激情点歌ing")
                 await wxlib.sendMsg(gid, resp)
             else:
-                bot: Bot = await get_bot()
+                bot: Bot = get_bot()
                 botid = (await bot.call_api("get_login_info"))['user_id']
                 await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
                 await bot.send_group_msg(group_id=gid,

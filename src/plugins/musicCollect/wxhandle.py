@@ -104,7 +104,7 @@ async def who_handle(school_id: str, gid: str, user_id: str, match):
         userinfo = await wxlib.getMemberInfo(userid)
         card = f"{userinfo['nickname']}({userinfo['account']})"
     else:
-        bot = await get_bot()
+        bot = get_bot()
         stranger_info = await bot.get_stranger_info(user_id=userid)
         card = f"QQ用户 {stranger_info['nickname']}({userid})"
     resp = f"歌曲《{name}》的点歌人是：{card}"

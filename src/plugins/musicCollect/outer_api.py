@@ -111,14 +111,14 @@ async def play_id(school_id: str, id: int = 1):
                     if gid.find("@chatroom") != -1:
                         await wxlib.changeCard(gid, card)
                     else:
-                        bot: Bot = await get_bot()
+                        bot: Bot = get_bot()
                         botid = (await bot.call_api("get_login_info"))['user_id']
                         await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                     continue
                 if gid.find("@chatroom") != -1:
                     await wxlib.sendMsg(gid, resp)
                 else:
-                    bot: Bot = await get_bot()
+                    bot: Bot = get_bot()
                     await bot.send_group_msg(group_id=gid, message=resp)
         except Exception as e:
             logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
@@ -145,14 +145,14 @@ async def play_id(school_id: str, id: int = 1):
                         if gid.find("@chatroom") != -1:
                             await wxlib.changeCard(gid, card)
                         else:
-                            bot: Bot = await get_bot()
+                            bot: Bot = get_bot()
                             await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                         continue
 
                     if gid.find("@chatroom") != -1:
                         await wxlib.sendMsg(gid, resp)
                     else:
-                        bot: Bot = await get_bot()
+                        bot: Bot = get_bot()
                         await bot.send_group_msg(group_id=gid, message=resp)
             except Exception as e:
                 logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
@@ -181,7 +181,7 @@ async def get_operations(school_id: str):
 # 通知接口，可通过此接口向我发送通知
 @app.get("/notify")
 async def get_operations(text: str):
-    bot: Bot = await get_bot()
+    bot: Bot = get_bot()
     await bot.send_private_msg(user_id=1124468334,
                                message=base64.b64decode(text).decode("utf-8"))
     return {"res": 0}

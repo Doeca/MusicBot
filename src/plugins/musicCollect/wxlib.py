@@ -22,8 +22,8 @@ async def hookSyncMsg():
     url = f"http://{system.wx_host}:{system.wx_port}/api/hookSyncMsg"
     payload = {
         "port": "19099",
-        "ip": "10.253.33.247",
-        "url": "http://10.253.33.247:19099/wxpush",
+        "ip": "192.168.5.3",
+        "url": "http://192.168.5.3:19099/wxpush",
         "timeout": "15000",
         "enableHttp": "0"
     }

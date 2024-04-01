@@ -59,7 +59,7 @@ schoolInfo = dict()  # 当前点歌开启状态、歌单等即时信息，不受
 
 lock = asyncio.Lock()
 
-fs = open(f"./random.store", 'r')
+fs = open(f"./config/music/random.store", 'r')
 random = json.loads(s=fs.read())
 fs.close()
 
@@ -73,10 +73,11 @@ async def get_schoolList():
     #         global schoolList
     #         schoolList = await resp.json()
     #         return True
-    fs = open("./config/list.json")
+    fs = open("./config/music/list.json")
     global schoolList
     schoolList = json.loads(fs.read())
     fs.close()
+    schoolInfo.clear() # 清空残留数据
     return True
 
 
@@ -90,7 +91,7 @@ async def get_schoolSettings():
     #             schoolSettings[val] = tmp
     #             return True
     for val in schoolList.keys():
-        fs = open(f"./config/{val}.json")
+        fs = open(f"./config/music/{val}.json")
         schoolSettings[val] = json.loads(fs.read())
         fs.close()
 

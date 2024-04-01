@@ -36,7 +36,8 @@ async def entrance(gid: str, user_id, msg: str):
 async def music_handle(school_id: str, gid: str, user_id, msg: str):
     qqid = await qq_matcher(msg)
     wyid = await wyy_matcher(msg)
-    if qqid == "" and wyid == "":
+    kgid = await kugou_matcher(msg)
+    if qqid == "" and wyid == "" and kgid == "":
         return
     status = await util.get_switch(school_id)
     if status == False:
@@ -44,8 +45,11 @@ async def music_handle(school_id: str, gid: str, user_id, msg: str):
         return
     if qqid != "":
         res = await util.addTolist(None, school_id, qqid, 'qq', user_id)
-    else:
+    elif wyid != "":
         res = await util.addTolist(None, school_id, wyid, 'wy', user_id)
+    else:
+        res = await util.addTolist(None, school_id, kgid, 'kg', user_id)
+
     await wxlib.sendMsg(gid, res['msg'], user_id)
 
 
@@ -220,6 +224,18 @@ async def wyy_matcher(content: str):
     reg_str = [
         "http.*?music\.163\.com.*?&amp;id=([0-9]{1,})",
         "https:.*y\.music.*m\/song\?id=([0-9]{1,})&"
+    ]
+    for rs in reg_str:
+        match = re.search(rs, content)
+        if match != None:
+            return match.group(1)
+    return ""
+
+
+async def kugou_matcher(content: str):
+    # 可以直接取到id的格式
+    reg_str = [
+        "<url>https://t3\.kugou\.com/wc/s/(\w+)#wechat_music_url"
     ]
     for rs in reg_str:
         match = re.search(rs, content)

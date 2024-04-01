@@ -60,7 +60,7 @@ async def run_start_order(school_id, tzinfo: dict):
             config.schoolInfo[school_id]['current_song_id'] = 0
             config.schoolInfo[school_id]['current_song_title'] = ""
 
-        resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦"
+        resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐、酷狗音乐】的歌曲哦"
         for gid in setting['groups']:
             if gid.find("@chatroom") != -1:
                 await wxlib.changeCard(gid, "激情点歌ing")

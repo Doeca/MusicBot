@@ -146,6 +146,7 @@ async def play_id(school_id: str, id: int = 1):
                             await wxlib.changeCard(gid, card)
                         else:
                             bot: Bot = get_bot()
+                            botid = (await bot.call_api("get_login_info"))['user_id']
                             await bot.set_group_card(group_id=gid, user_id=botid, card=card)
                         continue
 
@@ -153,6 +154,7 @@ async def play_id(school_id: str, id: int = 1):
                         await wxlib.sendMsg(gid, resp)
                     else:
                         bot: Bot = get_bot()
+                        botid = (await bot.call_api("get_login_info"))['user_id']
                         await bot.send_group_msg(group_id=gid, message=resp)
             except Exception as e:
                 logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
@@ -202,3 +204,22 @@ async def _():
     res = await bot.call_api("get_stranger_info", user_id=1124468334)
     print(f"res:{res}")
     return {"res": 0}
+
+
+@app.post("/update_ip")
+async def _(req:Request):
+    import requests
+    import json
+    payload_head = {
+        "X-Auth-Email": "i@doeca.cc",
+        "X-Auth-Key": "b8bc84f28e9aa04612a5a7a8686ae3c42ad70",
+        "Content-Type": "application/json",
+    }
+    raw_body = await req.body()
+    new_ip = raw_body.decode("utf-8")
+    payload_param = {"name": "mi.cquluna.top", "type": "AAAA"}
+    url = "https://api.cloudflare.com/client/v4/zones/cbe9c8c41ac3187b4560813514730432/dns_records"
+    meta = requests.get(url,params=payload_param,headers=payload_head).json()['result'][0]
+    url = f"https://api.cloudflare.com/client/v4/zones/cbe9c8c41ac3187b4560813514730432/dns_records/{meta['id']}"
+    res = requests.patch(url, data=json.dumps({"content": new_ip}), headers=payload_head)
+    return res.json()

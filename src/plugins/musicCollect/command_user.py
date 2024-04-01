@@ -17,7 +17,7 @@ help_matcher = on_regex('帮助|\/help')
 
 @help_matcher.handle()
 async def help(e: GroupMessageEvent, bot: Bot):
-    fs = open("./help.store", "r")
+    fs = open("./config/music/help.store", "r")
     resp = fs.read()
     fs.close()
     await bot.send(e, message=resp, at_sender=True, reply_message=True)

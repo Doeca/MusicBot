@@ -1,6 +1,6 @@
 let apiUrl = '{{ apiUrl }}';
 let school_id = '{{ school_id }}';
-let delay = 5000;
+let delay = 10000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
 let tt = 0;
@@ -42,8 +42,6 @@ function player() {
         context.event.on('landing:updated', function () {
             aplayer1();
             setTimeout(async () => {
-
-
                 while (true) {
                     let stage = 0;
                     try {

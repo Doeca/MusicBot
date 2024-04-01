@@ -117,7 +117,7 @@ async def who_handle(school_id: str, gid: str, user_id: str, match):
 
 @commandReg('帮助|/help')
 async def help_handle(school_id: str, gid: str, user_id: str, match):
-    fs = open("./help.store", "r")
+    fs = open("./config/music/help.store", "r")
     resp = fs.read()
     fs.close()
     await wxlib.sendMsg(gid, resp, user_id)

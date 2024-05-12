@@ -1,9 +1,12 @@
 let apiUrl = '{{ apiUrl }}';
 let school_id = '{{ school_id }}';
-let delay = 10000;
+let delay = 3000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
+let songLoaded = 0; // 没有加载完成歌曲信息
+let reloadTime = {}; // 失败后重载次数
 let tt = 0;
+let version = 1.75;
 docute.init({
     landing: 'landing.html',
     title: '小老虎食堂音乐播放器',
@@ -15,6 +18,10 @@ docute.init({
 });
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+function addLog(text) {
+    document.getElementById("logArea").innerHTML = document.getElementById("logArea").innerHTML + '\n' + text;
 }
 
 function aplayer1() {
@@ -30,11 +37,37 @@ function aplayer1() {
     });
 
     window.ap1.on('ended', () => {
+        addLog(`歌曲:${currentID}播放完毕，加载新歌`)
         playStatus = 0;
+        songLoaded = 0;
+
     })
-    window.ap1.on('error', () => {
-        playStatus = 0;
+    window.ap1.on('error', async () => {
+        if (playStatus == 1) {
+            await sleep(1000);
+            playStatus = 0;
+            songLoaded = 0;
+            if (reloadTime[`id${currentID}`] >= 3) {
+                addLog(`歌曲:${currentID}重载次数达到上限，准备切歌`);
+                await loadPlayer();
+            } else {
+                addLog(`歌曲:${currentID}加载出错，准备重载`);
+                reloadTime[`id${currentID}`]++;
+                await skipNext();
+            }
+
+        }
     })
+    window.ap1.on('loadedmetadata', () => {
+
+        if (playStatus == 1) {
+            songLoaded = 1;
+            addLog(`歌曲:${currentID}加载完毕`)
+        }
+
+    })
+
+    document.getElementById("title").innerHTML = document.getElementById("title").innerHTML + ' ' + version;
 }
 
 function player() {
@@ -49,6 +82,13 @@ function player() {
                         stage = 1;
                         await loadPlayer();
                         stage = 2;
+
+                        let playstatus = window.ap1.audio.paused
+                        if (playStatus == 1 && playstatus) {
+                            res = window.ap1.play();
+                            console.log(res);
+                            addLog(`歌曲:${currentID}未在播放，请求播放`)
+                        }
                         await sleep(delay);
 
                     } catch (err) {
@@ -61,7 +101,7 @@ function player() {
                     }
                 }
 
-            }, delay)
+            }, 1000)
         });
     };
 }
@@ -73,14 +113,21 @@ async function loadPlayer(skipCheck) {
             return;
     }
     //获取最新id，获取播放信息然后进行
-    let res = await fetch(`${apiUrl}/getLatestID?school_id=${school_id}`, { mode: "cors" }).catch(err => { })
-    let resp = await res.json();
+    try {
+        let res = await fetch(`${apiUrl}/getLatestID?school_id=${school_id}`, { mode: "cors" }).catch(err => {
+        })
+        let resp = await res.json();
+        id = resp.res;
+    } catch (err) {
+        addLog(`获取新歌ID时出错，准备重新获取`)
+        id = -1;
+    }
 
-    id = resp.res;
     if (id != currentID) {
         currentID = id
+        reloadTime[`id${currentID}`] = 0; // 为这首歌的重载次数赋0
+        addLog(`获取新歌ID:${currentID}`)
         await skipNext();
-        //console.log(`skipNext了,playStatus:${playStatus}`)
     }
 
 }
@@ -95,7 +142,6 @@ async function skipNext() {
 
     let resp = await res.json();
     if (resp.res == -1) {
-        console.log(resp);
         return;
     }
     ap.list.add([{
@@ -106,9 +152,12 @@ async function skipNext() {
         lrc: resp.lrcUrl,
         theme: '#ebd0c2'
     }]);
+
     playStatus = 1;
+    while (songLoaded == 0)
+        await sleep(100);
+    await sleep(100);
     ap.play();
-    setInterval(5000, () => { window.ap1.play() });
 }
 
 

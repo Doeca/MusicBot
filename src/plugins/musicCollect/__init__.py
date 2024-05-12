@@ -7,6 +7,7 @@ from . import outer_api
 from . import command_user
 from . import command_admin
 from . import outer_wx
+from . import loginManage
 import asyncio
 
 asyncio.run(config.init_config())

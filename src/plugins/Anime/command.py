@@ -27,7 +27,7 @@ from nonebot.adapters.onebot.v11 import Bot,  PrivateMessageEvent
 
 
 def getConfig():
-    return yaml.load(open("./config/anime.yml", "r", encoding="utf-8"), Loader=yaml.FullLoader)
+    return yaml.load(open("./config/anime/config.yml", "r", encoding="utf-8"), Loader=yaml.FullLoader)
 
 
 async def httpGet(url, head={}):
@@ -87,7 +87,7 @@ async def _(bot: Bot, e: PrivateMessageEvent, matcher: Matcher, args: Message = 
         subcribers.pop(aim_name)
         config.get("sub").pop(anime_titles.index(aim_name))
 
-    yaml.dump(config, open("./config/anime.yml", "w",
+    yaml.dump(config, open("./config/anime/config.yml", "w",
                            encoding="utf-8"), allow_unicode=True)
     from . import cron
     await matcher.finish("取消订阅成功~🤘")
@@ -130,7 +130,7 @@ async def _(bot: Bot, e: PrivateMessageEvent, matcher: Matcher, args: Message = 
             return
         config["subcriber"][title].append(e.user_id)
 
-    yaml.dump(config, open("./config/anime.yml", "w",
+    yaml.dump(config, open("./config/anime/config.yml", "w",
                            encoding="utf-8"), allow_unicode=True)
     from . import cron
     await matcher.finish("订阅成功~🤘")

@@ -173,18 +173,20 @@ async def next_handle(school_id: str, gid: str, user_id: str, match):
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
             await wxlib.sendMsg(gid, resp, user_id)
             return
-        vote_num += 1
-        vote_list.append(user_id)
+
+        async with config.lock:
+            vote_num += 1
+            vote_list.append(user_id)
 
         if (vote_num >= vote_need):
             await util.addOperation(school_id, 'next')
             resp = "切歌票数已达标，切换到下一首歌"
         else:
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
-        async with config.lock:
-            fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-            fs.write(json.dumps(info))
-            fs.close()
+
+        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+        fs.write(json.dumps(info))
+        fs.close()
     await wxlib.sendMsg(gid, resp, user_id)
 
 
@@ -243,7 +245,40 @@ async def kugou_matcher(content: str):
             return match.group(1)
     return ""
 
-# QQ处理器
-# 网易云处理器
-# 其它命令处理器
-# 加好友事件处理 -> testanything ok.still can use
+
+# 私聊消息处理
+commands_pri = list()
+
+
+def commandReg_pri(command_reg: str):
+    def decorator(func):
+        commands_pri.append({"reg": command_reg, "func": func})
+
+        async def wrapper(*args, **kwargs):
+            result = await func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+
+async def entrance_private(user_id: str, msg: str):
+    # print(f"Recv wechat msg from {user_id} : {msg}")
+    for crg in commands_pri:
+        match = re.search(crg['reg'], msg)
+        if (match != None):
+            await crg['func'](user_id, match)
+
+
+@commandReg_pri('<emoji.*cdnurl="(.*?)".*?></emoji>')
+async def help_handle(user_id: str, match):
+    cdn_url: str = util.unescape(match.group(1))
+    # print(f"get cdn url : {cdn_url}")
+    imgurl = util.urlencode(cdn_url)
+    filename = f"{util.getmd5(imgurl)}.gif"
+    path = util.urlencode(
+        f"/root/projects/wxhelper/cache/{filename}")
+    api = f"https://tun6.cquluna.top:30000/remotedownload?url={imgurl}&path={path}"
+    await util.httpGet(api)
+    await wxlib.sendImg(user_id, f"C:\\sharefolder\\{filename}")
+    # print(f"get cdn url : {cdn_url}")
+    pass

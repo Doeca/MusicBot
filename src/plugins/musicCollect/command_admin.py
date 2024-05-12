@@ -44,39 +44,10 @@ async def volume_got(e: GroupMessageEvent, arg: str = ArgStr('arg')):
     await volume_matcher.finish(f"已将音量调整为{rarg}")
 
 
-cookie_matcher = on_command("cookie", permission=SUPERUSER)
 
 
-@cookie_matcher.handle()
-async def cookieUploadPre(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
-    cookie = args.extract_plain_text().strip()
-    if cookie != '':
-        matcher.set_arg("arg", cookie)
 
 
-@cookie_matcher.got("arg", prompt="请输入cookie文本")
-async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg')):
-    apiUrl = config.system.music_api
-    raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
-    await util.httpGet(f"{apiUrl}/update_cookie?raw={raw}")
-    await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
-
-qqcookie_matcher = on_command("qqcookie", permission=SUPERUSER)
-
-
-@qqcookie_matcher.handle()
-async def cookieUploadPre(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
-    cookie = args.extract_plain_text().strip()
-    if cookie != '':
-        matcher.set_arg("arg", cookie)
-
-
-@qqcookie_matcher.got("arg", prompt="请输入qqcookie文本")
-async def cookieUpload(bot: Bot, e: PrivateMessageEvent, arg: str = ArgStr('arg')):
-    apiUrl = config.system.music_api
-    raw = str(base64.b64encode(arg.encode("utf-8")), "utf-8")
-    await util.httpGet(f"{apiUrl}/update_qqcookie?raw={raw}")
-    await cookie_matcher.finish(f"Cookies：{arg}\n已经上传")
 
 
 reload_matcher = on_command("reload", permission=SUPERUSER)
@@ -92,47 +63,7 @@ async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message=resp)
 
 
-login_matcher = on_command("login", permission=SUPERUSER)
-
-
-@login_matcher.handle()
-async def login_handle(bot: Bot, e: PrivateMessageEvent):
-    await bot.send(e, message="正在处理，请稍后")
-    apiUrl = config.system.music_api
-    resp = await util.httpGet(f"{apiUrl}/login")
-    resp = json.loads(s=resp)
-    if resp['res'] == -1:
-        await bot.send(e, message=resp['msg'])
-    else:
-        await bot.send(e, message="请及时登录,然后发送/getcookie命令")
-        await bot.send(e, message=Message(MessageSegment.image(f"base64://{resp['msg']}")))
-
-
-status_matcher = on_command("status", permission=SUPERUSER)
-
-
-@status_matcher.handle()
-async def status_handle(bot: Bot, e: PrivateMessageEvent):
-    await bot.send(e, message="正在处理，请稍后")
-    apiUrl = config.system.music_api
-    resp = await util.httpGet(f"{apiUrl}/status")
-    resp = json.loads(s=resp)
-    await bot.send(e, message=f"status:\nqq:{resp['qq']}\nwy:{resp['wy']}")
-
-getcookie_matcher = on_command("getcookie", permission=SUPERUSER)
-
-
-@getcookie_matcher.handle()
-async def login_handle(bot: Bot, e: PrivateMessageEvent):
-    await bot.send(e, message="正在处理，请稍后")
-    apiUrl = config.system.music_api
-    resp = await util.httpGet(f"{apiUrl}/getCookie")
-    resp = json.loads(s=resp)
-    await bot.send(e, message=resp['msg'])
-hook_matcher = on_command("hook", permission=SUPERUSER)
-
-
-@hook_matcher.handle()
+@on_command("hook", permission=SUPERUSER).handle()
 async def hook_handle(bot: Bot, e: PrivateMessageEvent):
     from . import wxlib
     res = await wxlib.hookSyncMsg()
@@ -158,6 +89,20 @@ async def wxgroup_handle(bot: Bot, e: PrivateMessageEvent):
     from . import wxlib
     res = await wxlib.getContacts()
     await bot.send(e, message=json.dumps(res, ensure_ascii=False))
+
+cronlist_matcher = on_command("cronlist", permission=SUPERUSER)
+
+
+@cronlist_matcher.handle()
+async def cronlist_handle(bot: Bot, e: PrivateMessageEvent):
+    from . import cron
+    cron.get_cron_list()
+    crons = []
+    for job in cron.cronList:
+        crons.append(
+            f"id:{job['id']} type:{job['type']} {job['arg']}")
+    res = "\n".join(crons)
+    await bot.send(e, message=res)
 
 
 logger.info("管理端命令加载完成")

@@ -22,10 +22,10 @@ async def hookSyncMsg():
     url = f"http://{system.wx_host}:{system.wx_port}/api/hookSyncMsg"
     payload = {
         "port": "19099",
-        "ip": "192.168.5.3",
-        "url": "http://192.168.5.3:19099/wxpush",
+        "ip": "10.253.33.253",
+        "url": "http://10.253.33.253:19099/wxpush",
         "timeout": "15000",
-        "enableHttp": "0"
+        "enableHttp": False
     }
     resp = await httpPost(url, json_data=payload)
     if resp == None:
@@ -62,6 +62,17 @@ async def sendMsg(gid: str, msg: str, user_id: str = ""):
         return False
     return resp['msg'] == 'success'
 
+
+async def sendImg(wxid: str, path: str):
+    url = f"http://{system.wx_host}:{system.wx_port}/api/sendImagesMsg"
+    payload = {
+        "wxid": wxid,
+        "imagePath": path,
+    }
+    resp = await httpPost(url, head={}, json_data=payload)
+    if resp == None:
+        return False
+    return resp['msg'] == 'success'
 
 async def getWxid():
     url = f"http://{system.wx_host}:{system.wx_port}/api/userInfo"

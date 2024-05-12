@@ -79,18 +79,21 @@ async def next(e: GroupMessageEvent, bot: Bot):
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
             await bot.send(e, message=resp, at_sender=True, reply_message=True)
             return
-        vote_num += 1
-        vote_list.append(userid)
+        
+        async with config.lock:
+            vote_num += 1
+            vote_list.append(userid)
 
         if (vote_num >= vote_need):
             await util.addOperation(school_id, 'next')
             resp = "切歌票数已达标，切换到下一首歌"
         else:
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
-        async with config.lock:
-            fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-            fs.write(json.dumps(info))
-            fs.close()
+
+        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+        fs.write(json.dumps(info))
+        fs.close()
+        
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 

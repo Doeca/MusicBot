@@ -4,6 +4,8 @@ import json
 import aiohttp
 from . import config
 from . import wxlib
+import urllib.parse
+import hashlib
 from nonebot import get_bot as nbget_bot
 from nonebot import logger
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Event
@@ -14,6 +16,15 @@ def unescape(str: str):
     str = str.replace("\\/", "/")
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
+
+def urlencode(str:str):
+    return urllib.parse.quote(str)
+
+def getmd5(data):
+    md5 = hashlib.md5()
+    md5.update(data.encode('utf-8'))
+    hash_result = md5.hexdigest()
+    return hash_result
 
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
@@ -59,36 +70,6 @@ async def is_black(school_id: str, name: str):
         if name.find(word) != -1:
             return True
     return False
-
-lock = asyncio.Lock()
-
-
-async def get_bot():
-    # 方案已废弃，不再使用
-
-    # 使用本函数意味着事件源不来自QQ，为自行创建的事件（例如定时任务）
-    # 调用地方：
-    # 1. 定时任务开启任务、关闭任务
-    # 2. WebAPI播报当前歌曲
-    # 3. Wechat “谁点的”命令获取点歌人的信息
-
-    # botid为shamrock中默认登录的那个qq号，也就是bot_ids的第一个qq号，通过pop读取然后丢弃，如果这个账号出现问题需要切换，那么再从后续的id中读取
-    async with lock:
-        bot: Bot = nbget_bot()
-        # 如果这里是None的话说明Shamrock已经丢失连接了
-        if bot == None:
-            logger.error("Shamrock已掉线，无法正常通信")
-            return None
-        try:
-            await bot.call_api("get_stranger_info", user_id=1124468334)
-            logger.info("账号正常")
-        except:
-            # 如果调用失败则需要切换账号
-            await bot.call_api("switch_account", user_id=config.system.bot_ids.pop(0))
-            logger.info("账号切换请求已完成")
-            await asyncio.sleep(3)
-            await bot.send_private_msg(user_id=1124468334, message=f"Shamrock原账号已掉线，已自动切换账号为本号")
-        return bot
 
 
 async def get_switch(school_id: str):
@@ -142,23 +123,24 @@ async def addTolist(bot_para, school_id: str, songid: str, type: str, user_id: s
     if (len(song_list) >= info['tzinfo']['mainlimit']):
         return {'code': -4, "msg": f"很抱歉，此时段点歌数量已达{info['tzinfo']['mainlimit']}首，无法继续点歌了💦"}
 
+    song_info = {
+        "name": res['name'],
+        "author": res['author'],
+        "playUrl": res['playUrl'],
+        "lrcUrl": res['lrcUrl'],
+        "cover": res['cover'],
+        "played": 0,
+        "id": len(song_list) + 1,
+        "uin": user_id
+    }
+
     async with config.lock:
         info['order_users'][f"user{user_id}"] = order_users.get(
             f"user{user_id}", 0) + 1
-        song_info = {
-            "name": res['name'],
-            "author": res['author'],
-            "playUrl": res['playUrl'],
-            "lrcUrl": res['lrcUrl'],
-            "cover": res['cover'],
-            "played": 0,
-            "id": len(song_list) + 1,
-            "uin": user_id
-        }
         song_list.append(song_info)
-        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-        fs.write(json.dumps(info))
-        fs.close()
+    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+    fs.write(json.dumps(info))
+    fs.close()
 
     if song_info['id'] >= info['tzinfo']['mainlimit']:
         setting: dict = config.schoolSettings[school_id]
@@ -198,14 +180,14 @@ async def generateSongList(school_id):
 
 # 将操作加入操作列表
 async def addOperation(school_id, type: str, para=0):
+    info = config.schoolInfo.get(school_id, None)
+    if (info == None):
+        return
     async with config.lock:
-        info = config.schoolInfo.get(school_id, None)
-        if (info == None):
-            return
         info['operation_list'].append({"type": type, "para": para})
-        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-        fs.write(json.dumps(info))
-        fs.close()
+    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+    fs.write(json.dumps(info))
+    fs.close()
 
 
 # 处理时间的显示格式

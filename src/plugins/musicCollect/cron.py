@@ -18,6 +18,7 @@ cronLock = asyncio.Lock()
 
 
 async def run_start_order(school_id, tzinfo: dict):
+    #print(f"{school_id} 执行开始任务 {time.strftime('%H:%M', time.localtime())}")
     async with cronLock:
         info: dict = config.schoolInfo.get(school_id, {})
         setting: dict = config.schoolSettings[school_id]
@@ -76,10 +77,12 @@ async def run_start_order(school_id, tzinfo: dict):
 
 
 async def run_stop_order(school_id):
+    #print(f"{school_id} 执行停止任务 {time.strftime('%H:%M', time.localtime())}")
     async with cronLock:
-        info: dict = config.schoolInfo.get(school_id)
+        info: dict = config.schoolInfo.get(school_id, {})
         setting: dict = config.schoolSettings[school_id]
         if (info.get("switch_status", 0) == 0):
+            #print("已经停止，提前返回")
             return
         config.schoolInfo.pop(school_id)
         try:
@@ -93,7 +96,8 @@ async def run_stop_order(school_id):
                     botid = (await bot.call_api("get_login_info"))['user_id']
                     await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
                     await bot.send_group_msg(group_id=gid, message=resp)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
 """
@@ -106,8 +110,8 @@ async def run_stop_order(school_id):
 async def init_cron():
 
     # 清空正在维护的定时任务
-    for id in cronList:
-        scheduler.remove_job(id)
+    for job in cronList:
+        scheduler.remove_job(job['id'])
     cronList.clear()
 
     # 为每个学校创建定时任务
@@ -115,19 +119,25 @@ async def init_cron():
         setting = config.schoolSettings[id]
         for tzinfo in setting['timezone']:
             set_time = tzinfo['settime']
-
             # 传递当前时段的设置信息给启动任务
             # 此架构从设计上来说是可以在相同的时间段内开启多个点歌任务的
             # 但是这样会导致数据的混乱，所以不允许这样做
             # 可以通过设置不同的星期数来实现多个时段的点歌任务
+
             jobs_id = id + "_" + str(random.randint(10000, 99999))
             scheduler.add_job(run_start_order, "cron",
-                              hour=set_time[0], minute=set_time[1], id=f"{jobs_id}",  args=[id, tzinfo])
-            cronList.append(jobs_id)
-
+                              hour=set_time[0], minute=set_time[1], second="*/10", id=f"{jobs_id}",  args=[id, tzinfo])
+            cronList.append({'type': 'start', 'id': jobs_id,
+                            'arg': f"{set_time[0]}:{set_time[1]}"})
             jobs_id = id + "_" + str(random.randint(10000, 99999))
             scheduler.add_job(run_stop_order, "cron",
-                              hour=set_time[2], minute=set_time[3], id=f"{jobs_id}",  args=[id])
-            cronList.append(jobs_id)
+                              hour=set_time[2], minute=set_time[3], second="*/10", id=f"{jobs_id}",  args=[id])
+            cronList.append({'type': 'stop', 'id': jobs_id,
+                            'arg': f"{set_time[2]}:{set_time[3]}"})
 
         logger.info(f"学校：{id} 定时任务启动完毕")
+
+
+def get_cron_list():
+    for job in scheduler.get_jobs():
+        print(job)

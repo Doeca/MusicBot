@@ -11,9 +11,9 @@ require("nonebot_plugin_apscheduler")
 
 
 def getConfig():
-
-    return yaml.safe_load(open("./config/anime.yml", "r", encoding="utf-8"))
-
+    return yaml.safe_load(open("./config/anime/config.yml", "r", encoding="utf-8"))
+def getRecord():
+    return yaml.safe_load(open("./config/anime/record.yml", "r", encoding="utf-8"))
 
 def getID():
     import time
@@ -28,11 +28,12 @@ async def httpGet(url, head={}):
         try:
             config = getConfig()
             p = config.get("proxy", "http://127.0.0.1:7890")
-            resp = requests.get(url, proxies={"https": p, "http": p})
+            resp = requests.get(url, proxies={"https": p, "http": p},timeout=10)
+            #resp = requests.get(url)
             return resp.text
         except:
             i += 1
-            await asyncio.sleep(1000)
+            await asyncio.sleep(2)
             pass
     return None
 
@@ -48,12 +49,12 @@ async def httpPost(url, data, head={}):
                 return ""
 
 
-@scheduler.scheduled_job('cron', minute='*/10')
+@scheduler.scheduled_job('cron', minute='*/15')
 async def check():
-    logger.info("正在检查番剧更新")
+    print("正在检查番剧更新")
     config = getConfig()
     aria2Link = config.get("aria2", "https://aria.doeca.cc:16800/jsonrpc")
-    downloaded = config.get("downloaded", [])
+    downloaded = getRecord().get("downloaded", [])
     logger.debug(config.get("sub", []))
     for anime in config.get("sub", []):
         logger.debug(anime['link'])
@@ -66,7 +67,7 @@ async def check():
             if (title in downloaded):
                 # 已经提交过下载
                 continue
-            logger.info(f"检测到新番：{title}")
+            print(f"检测到新番：{title}")
             # 获取下载链接 Start
             resp = await httpGet(link)
             match = re.search(
@@ -85,24 +86,25 @@ async def check():
                 "method": "aria2.addUri",
                 "id": getID(),
                 "params": [
-                    "token:H3S7kbxl6wfR",
+                    f"token:{config.get('aria2token','')}",
                     [
                         downloadLink
                     ],
                     {
-                        "dir": f"/downloads/doeca/Anime/{anime['title']}"
+                        "dir": f"{config.get('aria2downloadpath','/downloads/')}{anime['title']}"
                     }
                 ]
             })
             if res is None:
-                logger.error(f"提交下载链接失败：{link}")
+                print(f"提交下载链接失败：{link}")
                 continue
             else:
-                logger.success(f"提交下载链接成功：{res}")
+                print(f"提交下载链接成功：{res}")
             downloaded.append(title)  # 加入已下载标记
             # 提交Aria2 End
-    config['downloaded'] = downloaded
-    yaml.dump(config, open("./config/anime.yml", "w",
+    record = {}
+    record['downloaded'] = downloaded
+    yaml.dump(record, open("./config/anime/record.yml", "w",
               encoding="utf-8"), allow_unicode=True)
 
 

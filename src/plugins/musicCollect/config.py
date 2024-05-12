@@ -47,8 +47,6 @@ class Config(BaseModel, extra=Extra.ignore):
     music_api: str
     wx_host: str
     wx_port: int
-    local_host: str
-    local_port: int
 
 
 load_status = 0  # 当前开启状态
@@ -77,7 +75,7 @@ async def get_schoolList():
     global schoolList
     schoolList = json.loads(fs.read())
     fs.close()
-    schoolInfo.clear() # 清空残留数据
+    schoolInfo.clear()  # 清空残留数据
     return True
 
 
@@ -96,6 +94,8 @@ async def get_schoolSettings():
         fs.close()
 
 system = Config.parse_obj(get_driver().config)
+
+
 async def init_config():
     global system
     system = Config.parse_obj(get_driver().config)
@@ -118,6 +118,8 @@ async def init_config():
 
 
 async def get_id(gid: str):
+    if gid == "":
+        return ''
     for key in schoolSettings.keys():
         if gid in schoolSettings[key]['groups']:
             return key

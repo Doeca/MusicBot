@@ -86,8 +86,10 @@ class LabControl:
         roomids = roomids.replace('", "', "%2C")
 
         if dataID == 0:
-            referurl = 'https://sxic.cquluna.top/Control/EditAdminCard'
+            referurl = 'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard'
+            requrl = 'https://sxic.cquluna.top/Control/EditAdminCard'
         else:
+            requrl = f'https://sxic.cquluna.top/Control/EditAdminCard/{dataID}'
             referurl = f'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard/{dataID}'
 
         url = f'https://sxic.cquluna.top/Control/JY_?Id={dataID}&CardNo={cardNumb}&StartTime=2022%2F09%2F01+00%3A00%3A00&EndTime=2026%2F06%2F30+00%3A00%3A00&CardType=%E6%97%B6%E6%AE%B5%E5%8D%A1&ids={roomids}&PersonNo={id}&password='
@@ -99,7 +101,7 @@ class LabControl:
             return False
 
         data = f'Id={dataID}&Ids={roomids}&UserId={id}&PersonNo={id}&CardNo={cardNumb}&password=&CardType=%E6%97%B6%E6%AE%B5%E5%8D%A1&Remark=&StartTime=2022%2F09%2F01+00%3A00%3A00&EndTime=2026%2F06%2F30+00%3A00%3A00&contralType=%E4%BB%85%E7%9F%AD%E5%BC%80%E9%97%A8'
-        resp = requests.post(referurl, data=data, headers={
+        resp = requests.post(requrl, data=data, headers={
             'Cache-Control': 'max-age=0',
             "Upgrade-Insecure-Requests": '1',
             'Origin': 'https://sxic.cquluna.top',
@@ -120,6 +122,8 @@ class LabControl:
         id = self.getID(stuid)
         url = f'https://sxic.cquluna.top/UserNew/Edit?Id={id}'
         resp = requests.get(url, headers={"Cookie": self.__cookie}).text
+        
+        # open("./config/sxic/temp.txt","w").write(resp)
 
         match = re.search(r'name="Password".*?value="(.{35})', resp)
         userPwd = match.group(1)  # 用户密码

@@ -32,7 +32,11 @@ async def create_item(req: Request):
         user_id = msg[0:msg.find(':')]
         msg = msg.replace(f"{user_id}:\n", "")
         await wxhandle.entrance(content['fromUser'], user_id, msg)
+    else:
+        msg: str = content['content']
+        await wxhandle.entrance_private(content['fromUser'], msg)
     return {"code": 0, "msg": "success"}
+
 
 
 logger.info("Wxhelp接口创建完成")

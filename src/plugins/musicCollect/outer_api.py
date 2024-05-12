@@ -94,13 +94,15 @@ async def play_id(school_id: str, id: int = 1):
     # 读取必要设置
     setting: dict = config.schoolSettings[school_id]
 
-    info['vote_num'] = 0
-    info['vote_list'] = list()
+    async with config.lock:
+        info['vote_num'] = 0
+        info['vote_list'] = list()
 
     if id >= 10000:
         v = config.random[id-10000]
-        info["current_song_id"] = id
-        info["current_song_title"] = f"{v['name']} - {v['author']}"
+        async with config.lock:
+            info["current_song_id"] = id
+            info["current_song_title"] = f"{v['name']} - {v['author']}"
 
         resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
         card = f"当前：{v['name']} - {v['author']}"
@@ -132,9 +134,9 @@ async def play_id(school_id: str, id: int = 1):
                 v['played'] = 1
                 info["current_song_id"] = id
                 info["current_song_title"] = f"{v['name']} - {v['author']}"
-                fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-                fs.write(json.dumps(info))
-                fs.close()
+            fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+            fs.write(json.dumps(info))
+            fs.close()
 
             resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
             card = f"当前：{v['name']} - {v['author']}"
@@ -165,19 +167,19 @@ async def play_id(school_id: str, id: int = 1):
 
 @app.get("/getOperations")
 async def get_operations(school_id: str):
-    async with config.lock:
-        status = await util.get_switch(school_id)
-        info = config.schoolInfo.get(school_id, None)
-        if (info == None):
-            return {"res": '-1'}
-
-        opertaionList = info['operation_list']
-        res = opertaionList[:]
+    status = await util.get_switch(school_id)
+    info = config.schoolInfo.get(school_id, None)
+    if (info == None):
+        return {"res": '-1'}
+    opertaionList = info['operation_list']
+    res = opertaionList[:]
+    async with config.lock:   
         opertaionList.clear()
-        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-        fs.write(json.dumps(info))
-        fs.close()
-        return res
+
+    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
+    fs.write(json.dumps(info))
+    fs.close()
+    return res
 
 
 # 通知接口，可通过此接口向我发送通知

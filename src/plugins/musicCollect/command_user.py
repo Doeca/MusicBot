@@ -11,12 +11,10 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 
-# 帮助
-help_matcher = on_regex('帮助|\/help')
 
-
-@help_matcher.handle()
+@on_regex('帮助|\/help', rule=util.group_checker).handle()
 async def help(e: GroupMessageEvent, bot: Bot):
+    # 帮助
     fs = open("./config/music/help.store", "r")
     resp = fs.read()
     fs.close()

@@ -17,14 +17,16 @@ def unescape(str: str):
     return str.replace("&#44;", ",").replace("&#91;", "[").replace("&#93;", ']').replace("&amp;", "&")
 
 
-def urlencode(str:str):
+def urlencode(str: str):
     return urllib.parse.quote(str)
+
 
 def getmd5(data):
     md5 = hashlib.md5()
     md5.update(data.encode('utf-8'))
     hash_result = md5.hexdigest()
     return hash_result
+
 
 async def httpGet(url):
     async with aiohttp.ClientSession() as session:
@@ -157,8 +159,8 @@ async def addTolist(bot_para, school_id: str, songid: str, type: str, user_id: s
 
 
 async def generateSongList(school_id):
-    info = config.schoolInfo.get(school_id, None)
-    song_list = info['song_list']
+    info: dict = config.schoolInfo.get(school_id, None)
+    song_list = info.get('song_list', [])
     length = len(song_list)
     res = '🗒歌曲列表（🅿️正在播放）：'
     id = info['current_song_id']

@@ -26,7 +26,7 @@ from nonebot.log import logger
 """
 
 link_1 = on_regex(
-    '"https:\/\/t1.kugou.com\/song.html\?id=(\w+)"&', block=True, priority=1)
+    '"https:\/\/t1.kugou.com\/song.html\?id=(\w+)"&', block=True, priority=1, rule=util.group_checker)
 # link_2 = on_regex(
 #     '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre', block=True, priority=2)
 

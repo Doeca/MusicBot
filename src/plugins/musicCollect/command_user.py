@@ -30,30 +30,26 @@ async def song_list(e: GroupMessageEvent, bot: Bot):
     resp = await util.generateSongList(school_id)
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
-# 2.正在播放
-playing_matcher = on_regex(
-    '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=util.group_checker)
 
-
-@playing_matcher.handle()
+@on_regex(
+    '正在播放|当前播放|放的是什么|现在.{1,8}什么|放的.{1,6}哪首歌', rule=util.group_checker).handle()
 async def playing(e: GroupMessageEvent, bot: Bot):
+    # 2.正在播放
     school_id = await config.get_id(str(e.group_id))
-    info = config.schoolInfo.get(school_id, None)
-    title = info['current_song_title']
+    info: dict = config.schoolInfo.get(school_id, {})
+    title = info.get('current_song_title', "")
     if (title == ""):
         resp = '👁‍🗨当前没有在播放歌曲'
     else:
         resp = f"🅿️当前歌曲【{title}】"
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
-# 3.切歌
-next_matcher = on_command("next", aliases={"切歌"}, rule=util.group_checker)
 
-
-@next_matcher.handle()
+@on_command("next", aliases={"切歌"}, rule=util.group_checker).handle()
 async def next(e: GroupMessageEvent, bot: Bot):
+    # 3.切歌
     school_id = await config.get_id(str(e.group_id))
-    info: dict = config.schoolInfo.get(school_id, dict())
+    info: dict = config.schoolInfo.get(school_id, {})
     if (info.get("current_song_id", 0) == 0):
         resp = "当前没有在播放歌曲哦，无法切歌"
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
@@ -139,12 +135,10 @@ async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
 
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
-rule_matcher = on_command(
-    "rule", aliases={"规则", "点歌规则"})
 
-
-@rule_matcher.handle()
+@on_command("rule", aliases={"规则", "点歌规则"}, rule=util.group_checker).handle()
 async def rule(bot: Bot, e: GroupMessageEvent):
+    # 5. 点歌规则
     school_id = await config.get_id(str(e.group_id))
     if (school_id == ""):
         return

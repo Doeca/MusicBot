@@ -26,13 +26,13 @@ from nonebot.log import logger
 """
 
 link_1 = on_regex(
-    'http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}', block=True, priority=1)
+    'http(s|):\/\/163cn\.tv\/[a-zA-Z0-9]{3,7}', block=True, priority=1, rule=util.group_checker)
 link_2 = on_regex(
-    'http.*?music\.163\.com.*?[\?\;]{1}id=([0-9]{3,14})&amp;',  block=True, priority=2)
+    'http.*?music\.163\.com.*?[\?\;]{1}id=([0-9]{3,14})&amp;',  block=True, priority=2, rule=util.group_checker)
 link_3 = on_regex(
-    '"musicUrl":"https:.*?music.163.com.*?url\?id=([0-9]{2,14})"&#44', block=True, priority=3)
+    '"musicUrl":"https:.*?music.163.com.*?url\?id=([0-9]{2,14})"&#44', block=True, priority=3, rule=util.group_checker)
 link_4 = on_regex(
-    'http.*?music.163.com.*?\?id=([0-9]{3,14})&amp;userid=[0-9]*', block=True, priority=4)
+    'http.*?music.163.com.*?\?id=([0-9]{3,14})&amp;userid=[0-9]*', block=True, priority=4, rule=util.group_checker)
 
 
 @link_1.handle()

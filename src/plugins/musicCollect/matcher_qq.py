@@ -26,9 +26,9 @@ from nonebot.log import logger
 """
 
 link_1 = on_regex(
-    'https:\/\/c6.y.qq.com\/base\/fcgi-bin\/u\?__=([a-zA-Z0-9]{10,15})', block=True, priority=1)
+    'https:\/\/c6.y.qq.com\/base\/fcgi-bin\/u\?__=([a-zA-Z0-9]{10,15})', block=True, priority=1, rule=util.group_checker)
 link_2 = on_regex(
-    '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre', block=True, priority=2)
+    '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre', block=True, priority=2, rule=util.group_checker)
 
 
 @link_1.handle()

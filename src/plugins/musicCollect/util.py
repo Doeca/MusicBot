@@ -159,7 +159,7 @@ async def addTolist(bot_para, school_id: str, songid: str, type: str, user_id: s
 
 
 async def generateSongList(school_id):
-    info: dict = config.schoolInfo.get(school_id, None)
+    info: dict = config.schoolInfo.get(school_id, {})
     song_list = info.get('song_list', [])
     length = len(song_list)
     res = '🗒歌曲列表（🅿️正在播放）：'

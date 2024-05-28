@@ -23,12 +23,9 @@ async def help(e: GroupMessageEvent, bot: Bot):
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 
-# 1.歌单
-song_list_matcher = on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=util.group_checker)
-
-
-@song_list_matcher.handle()
+@on_regex('^(歌曲列表|播放列表|待播清单|歌单)$', rule=util.group_checker).handle()
 async def song_list(e: GroupMessageEvent, bot: Bot):
+    # 1.歌单
     school_id = await config.get_id(str(e.group_id))
     resp = await util.generateSongList(school_id)
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
@@ -79,7 +76,7 @@ async def next(e: GroupMessageEvent, bot: Bot):
             resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
             await bot.send(e, message=resp, at_sender=True, reply_message=True)
             return
-        
+
         async with config.lock:
             vote_num += 1
             vote_list.append(userid)
@@ -93,7 +90,7 @@ async def next(e: GroupMessageEvent, bot: Bot):
         fs = open(f"./store/{school_id}/{info['log_file']}", "w")
         fs.write(json.dumps(info))
         fs.close()
-        
+
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 
@@ -160,7 +157,7 @@ async def rule(bot: Bot, e: GroupMessageEvent):
                 util.handleTime(f"{v['settime'][2]}:{v['settime'][3]}")]
         resp += f"{id}. {time[0]}--{time[1]}\n"
         resp += f" 歌单上限{v['mainlimit']}首，每人限点{v['personlimit']}首\n"
-    
+
     resp += "🧿支持平台: QQ音乐、网易云音乐、酷狗音乐"
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 

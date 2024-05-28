@@ -57,8 +57,7 @@ async def group_checker(e: GroupMessageEvent) -> bool:
     school_id = await config.get_id(str(e.group_id))
     if (school_id == ''):
         return False
-    res = await get_switch(school_id)
-    return res
+    return True
 
 # 检查歌曲名中是否有违禁词
 

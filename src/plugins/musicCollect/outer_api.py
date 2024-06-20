@@ -87,7 +87,7 @@ async def read_id(school_id: str):
 async def play_id(school_id: str, id: int = 1):
     # 2024 1月5日记录：这个版本的设计下，如果bot端离线则不能正常播放歌曲，需要调整
     status = await util.get_switch(school_id)
-    info = config.schoolInfo.get(school_id, None)
+    info: dict = config.schoolInfo.get(school_id, None)
     if (info == None):
         return {"res": '-1'}
 
@@ -100,8 +100,12 @@ async def play_id(school_id: str, id: int = 1):
 
     if id >= 10000:
         v = config.random[id-10000]
+        if id == info.get('last_song_id', -1):
+            # 加载出错，重新加载歌曲，不重新发送播放通知
+            return v
         async with config.lock:
             info["current_song_id"] = id
+            info['last_song_id'] = id
             info["current_song_title"] = f"{v['name']} - {v['author']}"
 
         resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
@@ -127,9 +131,12 @@ async def play_id(school_id: str, id: int = 1):
             pass
         return v
 
-    song_list = info['song_list']
+    song_list = info.get('song_list', [])
     for v in song_list:
         if (v['id'] == id):
+            if (v['played'] == 1):
+                # 加载出错，重新加载歌曲，不重新发送播放通知
+                return v
             async with config.lock:
                 v['played'] = 1
                 info["current_song_id"] = id
@@ -173,7 +180,7 @@ async def get_operations(school_id: str):
         return {"res": '-1'}
     opertaionList = info['operation_list']
     res = opertaionList[:]
-    async with config.lock:   
+    async with config.lock:
         opertaionList.clear()
 
     fs = open(f"./store/{school_id}/{info['log_file']}", "w")
@@ -203,25 +210,8 @@ async def _():
     #     except:
     #         pass
     bot: Bot = nonebot.get_bot()
-    res = await bot.call_api("get_stranger_info", user_id=1124468334)
+    #res = await bot.get_credentials(domain="https://y.qq.com")
+    #res = await bot.get_cookies()
+    res = await bot.call_api("get_credentials",domain="qzone.qq.com")
     print(f"res:{res}")
     return {"res": 0}
-
-
-@app.post("/update_ip")
-async def _(req:Request):
-    import requests
-    import json
-    payload_head = {
-        "X-Auth-Email": "i@doeca.cc",
-        "X-Auth-Key": "b8bc84f28e9aa04612a5a7a8686ae3c42ad70",
-        "Content-Type": "application/json",
-    }
-    raw_body = await req.body()
-    new_ip = raw_body.decode("utf-8")
-    payload_param = {"name": "mi.cquluna.top", "type": "AAAA"}
-    url = "https://api.cloudflare.com/client/v4/zones/cbe9c8c41ac3187b4560813514730432/dns_records"
-    meta = requests.get(url,params=payload_param,headers=payload_head).json()['result'][0]
-    url = f"https://api.cloudflare.com/client/v4/zones/cbe9c8c41ac3187b4560813514730432/dns_records/{meta['id']}"
-    res = requests.patch(url, data=json.dumps({"content": new_ip}), headers=payload_head)
-    return res.json()

@@ -163,7 +163,7 @@ async def generateSongList(school_id):
     song_list = info.get('song_list', [])
     length = len(song_list)
     res = '🗒歌曲列表（🅿️正在播放）：'
-    id = info['current_song_id']
+    id = info.get('current_song_id', 0)
     if length == 0:
         return '😗当前歌曲列表为🈳️'
     else:

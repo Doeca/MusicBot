@@ -1,6 +1,6 @@
 let apiUrl = '{{ apiUrl }}';
 let school_id = '{{ school_id }}';
-let delay = 3000;
+let delay = 10000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
 let songLoaded = 0; // 没有加载完成歌曲信息

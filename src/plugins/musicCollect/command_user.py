@@ -49,7 +49,7 @@ async def next(e: GroupMessageEvent, bot: Bot):
     school_id = await config.get_id(str(e.group_id))
     info: dict = config.schoolInfo.get(school_id, {})
     if (info.get("current_song_id", 0) == 0):
-        resp = "当前没有在播放歌曲哦，无法切歌"
+        resp = "🫨当前没有在播放歌曲哦，无法切歌"
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
         return
 
@@ -61,13 +61,13 @@ async def next(e: GroupMessageEvent, bot: Bot):
     vote_need = info['tzinfo']['voteneed']
     if (res == True):
         await util.addOperation(school_id, 'next')
-        resp = "已切换到下一首歌"
+        resp = "✴️已切换到下一首歌"
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
     else:
         vote_num = info['vote_num']
         vote_list = info['vote_list']
         if (userid in vote_list):
-            resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
+            resp = f"💢你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
             await bot.send(e, message=resp, at_sender=True, reply_message=True)
             return
 
@@ -77,9 +77,9 @@ async def next(e: GroupMessageEvent, bot: Bot):
 
         if (vote_num >= vote_need):
             await util.addOperation(school_id, 'next')
-            resp = "切歌票数已达标，切换到下一首歌"
+            resp = "✴️切歌票数已达标，切换到下一首歌"
         else:
-            resp = f"你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
+            resp = f"💢你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
 
         fs = open(f"./store/{school_id}/{info['log_file']}", "w")
         fs.write(json.dumps(info))
@@ -96,10 +96,10 @@ who_matcher = on_command(
 @who_matcher.handle()
 async def who_handle(e: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
     school_id = await config.get_id(str(e.group_id))
-    info: dict = config.schoolInfo.get(school_id, dict())
+    info: dict = config.schoolInfo.get(school_id, {})
     id = args.extract_plain_text().strip()
     if id == '':
-        id = info['current_song_id']
+        id = info.get('current_song_id', 0)
     elif id.isdigit():
         id = int(id)
     if id == 0:
@@ -108,19 +108,22 @@ async def who_handle(e: GroupMessageEvent, matcher: Matcher, args: Message = Com
         matcher.set_arg("arg", str(id))
 
 
-@who_matcher.got("arg", prompt="请输入歌曲列表中的序号")
+@who_matcher.got("arg", prompt="🆔请输入歌曲列表中的序号")
 async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
     school_id = await config.get_id(str(e.group_id))
-    info: dict = config.schoolInfo.get(school_id, dict())
+    status = await util.get_switch(school_id)
+    if status == False:
+        await who_matcher.finish("💦当前不在点歌时段")
 
-    song_list = info['song_list']
+    info: dict = config.schoolInfo.get(school_id, {})
+    song_list = info.get('song_list', [])
     line = arg.strip()
     if line.isdigit():
         id = int(line)
         if id == 0 or id > len(song_list):
-            await who_matcher.reject(f"歌曲序号：{id}不存在，请重新输入")
+            await who_matcher.finish(f"☄️歌曲序号：{id}不存在")
     else:
-        await who_matcher.finish(f"操作已取消")
+        await who_matcher.finish(f"😗操作已取消")
     userid: str = song_list[id-1]['uin']
     name = f"{song_list[id-1]['name']} - {song_list[id-1]['author']}"
     if userid.find("wx") != -1:
@@ -129,7 +132,7 @@ async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
     else:
         stranger_info = await bot.get_stranger_info(user_id=userid)
         card = f"{stranger_info['nickname']}({userid})"
-    resp = f"歌曲《{name}》的点歌人是：{card}"
+    resp = f"👍歌曲《{name}》的点歌人是：{card}"
 
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 

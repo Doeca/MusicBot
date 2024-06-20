@@ -23,7 +23,7 @@ class LabControl:
 
     def __check(self):
         '检查本地保存的cookie是否有效，无效则重新登陆 '
-        url = 'https://sxic.cquluna.top/UserNew/Edit?Id=208228'
+        url = 'http://mjgl.cqu.edu.cn:2050/UserNew/Edit?Id=208228'
         resp = requests.get(url, headers={"Cookie": self.__cookie})
         if resp.text == "<script>parent.location.href='/home/login'</script>":
             print("登陆失效，需要重新登陆")
@@ -35,7 +35,7 @@ class LabControl:
 
     def __login(self, username="", password=""):
         timestamp = int(round(time.time() * 1000))
-        url = f'https://sxic.cquluna.top/Home/DoLogin?username={"C0424" if username == "" else username}&userpwd={"DYLxYnPyndt5h6yWnsQUBCGOmFLuTtTBjAa7g11SiCIDhmaL3b2tjxx0v0Zv8KWd2JjCEGDWbI4EHZ1YEuR5048QdR4zXGJcaf%2F5YmdrYIKmqWfLeH8S4Ovkinw4JFwdI7XKhz8tLYucYDW%2Bw8LRWZMIP2DvrhfPOY2ICOEOb2U%3D" if password == "" else password}&_={timestamp}'
+        url = f'http://mjgl.cqu.edu.cn:2050/Home/DoLogin?username={"C0424" if username == "" else username}&userpwd={"DYLxYnPyndt5h6yWnsQUBCGOmFLuTtTBjAa7g11SiCIDhmaL3b2tjxx0v0Zv8KWd2JjCEGDWbI4EHZ1YEuR5048QdR4zXGJcaf%2F5YmdrYIKmqWfLeH8S4Ovkinw4JFwdI7XKhz8tLYucYDW%2Bw8LRWZMIP2DvrhfPOY2ICOEOb2U%3D" if password == "" else password}&_={timestamp}'
         resp = requests.get(url)
         cookie_dict = resp.cookies.get_dict()
         res = ''
@@ -53,7 +53,7 @@ class LabControl:
             return False
         self.changeInfo(stuid)
         id = self.getID(stuid)
-        url = f'https://sxic.cquluna.top/Control/AdminCard'
+        url = f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'
         data = f'CardNo={stuid}&type=&labRoomID=&Labid=&pageIndex=&PageSize=10'
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              'User-Agent': self.__ua, "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'})
@@ -87,12 +87,12 @@ class LabControl:
 
         if dataID == 0:
             referurl = 'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard'
-            requrl = 'https://sxic.cquluna.top/Control/EditAdminCard'
+            requrl = 'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard'
         else:
-            requrl = f'https://sxic.cquluna.top/Control/EditAdminCard/{dataID}'
+            requrl = f'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard/{dataID}'
             referurl = f'http://mjgl.cqu.edu.cn:2050/Control/EditAdminCard/{dataID}'
 
-        url = f'https://sxic.cquluna.top/Control/JY_?Id={dataID}&CardNo={cardNumb}&StartTime=2022%2F09%2F01+00%3A00%3A00&EndTime=2026%2F06%2F30+00%3A00%3A00&CardType=%E6%97%B6%E6%AE%B5%E5%8D%A1&ids={roomids}&PersonNo={id}&password='
+        url = f'http://mjgl.cqu.edu.cn:2050/Control/JY_?Id={dataID}&CardNo={cardNumb}&StartTime=2022%2F09%2F01+00%3A00%3A00&EndTime=2026%2F06%2F30+00%3A00%3A00&CardType=%E6%97%B6%E6%AE%B5%E5%8D%A1&ids={roomids}&PersonNo={id}&password='
 
         resp = requests.get(
             url, headers={'User-Agent': self.__ua, 'X-Requested-With': 'XMLHttpRequest', "Cookie": self.__cookie, "Referer": referurl}).text
@@ -104,7 +104,7 @@ class LabControl:
         resp = requests.post(requrl, data=data, headers={
             'Cache-Control': 'max-age=0',
             "Upgrade-Insecure-Requests": '1',
-            'Origin': 'https://sxic.cquluna.top',
+            'Origin': 'http://mjgl.cqu.edu.cn:2050',
             'Content-Type': 'application/x-www-form-urlencoded',
             'User-Agent': self.__ua,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -120,7 +120,7 @@ class LabControl:
         if (cardNumb == ''):
             return False
         id = self.getID(stuid)
-        url = f'https://sxic.cquluna.top/UserNew/Edit?Id={id}'
+        url = f'http://mjgl.cqu.edu.cn:2050/UserNew/Edit?Id={id}'
         resp = requests.get(url, headers={"Cookie": self.__cookie}).text
         
         # open("./config/sxic/temp.txt","w").write(resp)
@@ -144,7 +144,7 @@ class LabControl:
         collegeid = match.group(1)  # 按照原来的学院增加
 
         data = f'__RequestVerificationToken={token}&Id={id}&IDCardNo=&Picturer=&UserName={stuid}&RealName={userRealname}&PersonNo={stuid}&Sex={userSex}&Type=%E5%AD%A6%E7%94%9F&Password={userPwd}&NM_RoleIds=5&CardNo={cardNumb}&CheckPassword={stuid}&NM_CollegeIds={collegeid}&ClassMigration=False&level=100&Phone=&Email=&Grade=%E5%A4%A7%E5%AD%A6%E4%B8%93%E7%A7%91&Remark=%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%E5%90%8C%E6%AD%A5&file=&Picturer='
-        url = 'https://sxic.cquluna.top/UserNew/Edit'
+        url = 'http://mjgl.cqu.edu.cn:2050/UserNew/Edit'
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/UserNew/Edit?Id={id}'})
         return True
@@ -153,7 +153,7 @@ class LabControl:
         if (self.getCarNumb(stuid) == ''):
             return False
         id = self.getID(stuid)
-        url = f'https://sxic.cquluna.top/UserNew/Edit?Id={id}'
+        url = f'http://mjgl.cqu.edu.cn:2050/UserNew/Edit?Id={id}'
         resp = requests.get(url, headers={"Cookie": self.__cookie}).text
         match = re.search(r'name="Password".*?value="(.{35})', resp)
         userPwd = match.group(1)
@@ -166,7 +166,7 @@ class LabControl:
         token = match.group(1)
 
         data = f'__RequestVerificationToken={token}&Id={id}&IDCardNo=&Picturer=&UserName={stuid}&RealName={userRealname}&PersonNo={stuid}&Sex={userSex}&Type=%E5%AD%A6%E7%94%9F&Password={userPwd}&NM_RoleIds=5&CardNo=&CheckPassword={stuid}&NM_CollegeIds=317&NM_ClassesIds=5101&ClassMigration=False&level=100&Phone=&Email=&Grade=%E5%A4%A7%E5%AD%A6%E4%B8%93%E7%A7%91&Remark=%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%E5%90%8C%E6%AD%A5&file=&Picturer='
-        url = 'https://sxic.cquluna.top/UserNew/Edit'
+        url = 'http://mjgl.cqu.edu.cn:2050/UserNew/Edit'
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/UserNew/Edit?Id={id}'})
         return True
@@ -174,7 +174,7 @@ class LabControl:
     def getID(self, stuid: str):
         if (len(stuid) != 8):
             return ''
-        url = f'https://sxic.cquluna.top/User/GetUserSelectAllSsr?UId=&term={stuid}&q={stuid}'
+        url = f'http://mjgl.cqu.edu.cn:2050/User/GetUserSelectAllSsr?UId=&term={stuid}&q={stuid}'
         resp = requests.get(url)
         res = resp.json()
         if res[0]['text'].find(stuid) == -1:
@@ -187,7 +187,7 @@ class LabControl:
         id = self.getID(stuid)
         if (id == ''):
             return ''
-        url = f'https://sxic.cquluna.top/User/GetUserModel?id={id}'
+        url = f'http://mjgl.cqu.edu.cn:2050/User/GetUserModel?id={id}'
         resp = requests.get(url)
         res = resp.json()
         if res['LabCardNo'] == None:
@@ -195,7 +195,7 @@ class LabControl:
         return res['LabCardNo']
 
     def getCardInfo(self, stuid: str):
-        url = f'https://sxic.cquluna.top/Control/AdminCard'
+        url = f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'
         data = f'CardNo={stuid}&type=&labRoomID=&Labid=&pageIndex=&PageSize=10'
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              'User-Agent': self.__ua, "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'})
@@ -208,7 +208,7 @@ class LabControl:
 
     def tigerRemove(self):
 
-        url = f'https://sxic.cquluna.top/Control/AdminCard'
+        url = f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'
         data = f'CardNo=&type=&labRoomID=1945&Labid=&pageIndex=&PageSize=1000'
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              'User-Agent': self.__ua, "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'})
@@ -220,7 +220,7 @@ class LabControl:
         if ids == '':
             return 'Clean'
 
-        url = f'https://sxic.cquluna.top/Control/DeleteAdminCard?ids={ids}'
+        url = f'http://mjgl.cqu.edu.cn:2050/Control/DeleteAdminCard?ids={ids}'
         data = ''
         resp = requests.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded',
                              'User-Agent': self.__ua, "Cookie": self.__cookie, 'Referer': f'http://mjgl.cqu.edu.cn:2050/Control/AdminCard'})

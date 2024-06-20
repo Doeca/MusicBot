@@ -67,7 +67,7 @@ async def help_handle(school_id: str, gid: str, user_id: str, match):
     await wxlib.sendMsg(gid, resp, user_id)
 
 
-@commandReg('^/点歌规则$')
+@commandReg('^/(点歌规则|rule)$')
 async def rule_handle(school_id: str, gid: str, user_id: str, match):
     setting: dict = config.schoolSettings[school_id]
     resp = "🤘🎵点歌规则：\n"
@@ -88,8 +88,8 @@ async def who_handle(school_id: str, gid: str, user_id: str, match):
     res = await util.get_switch(school_id)
     if not res:
         return
-    info: dict = config.schoolInfo.get(school_id, dict())
-    song_list = info['song_list']
+    info: dict = config.schoolInfo.get(school_id, {})
+    song_list = info.get('song_list',[])
     line: str = match.group(1)
     if line == "":
         line = info['current_song_id']
@@ -125,9 +125,6 @@ async def help_handle(school_id: str, gid: str, user_id: str, match):
 
 @commandReg('^(歌曲列表|播放列表|待播清单|歌单)$')
 async def list_handle(school_id: str, gid: str, user_id: str, match):
-    res = await util.get_switch(school_id)
-    if not res:
-        return
     resp = await util.generateSongList(school_id)
     await wxlib.sendMsg(gid, resp, user_id)
 
@@ -276,7 +273,7 @@ async def help_handle(user_id: str, match):
     imgurl = util.urlencode(cdn_url)
     filename = f"{util.getmd5(imgurl)}.gif"
     path = util.urlencode(
-        f"/root/projects/wxhelper/cache/{filename}")
+        f"/root/projects/proj_musicbot/wxhelper/cache/{filename}")
     api = f"https://tun6.cquluna.top:30000/remotedownload?url={imgurl}&path={path}"
     await util.httpGet(api)
     await wxlib.sendImg(user_id, f"C:\\sharefolder\\{filename}")

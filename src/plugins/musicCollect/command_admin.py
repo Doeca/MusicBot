@@ -13,7 +13,6 @@ from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER
 volume_matcher = on_command("volume", permission=(
     SUPERUSER | GROUP_ADMIN | GROUP_OWNER), aliases={"音量"}, rule=util.group_checker)
 
-
 @volume_matcher.handle()
 async def volume_handle(bot: Bot, matcher: Matcher, args: Message = CommandArg()):
     rarg = args.extract_plain_text().strip()
@@ -25,7 +24,6 @@ async def volume_handle(bot: Bot, matcher: Matcher, args: Message = CommandArg()
         if (volume > 1):
             volume = volume*0.01
         matcher.set_arg("arg", rarg)
-
 
 @volume_matcher.got("arg", prompt="请输入音量百分比，例如：70%")
 async def volume_got(e: GroupMessageEvent, arg: str = ArgStr('arg')):
@@ -44,15 +42,7 @@ async def volume_got(e: GroupMessageEvent, arg: str = ArgStr('arg')):
     await volume_matcher.finish(f"已将音量调整为{rarg}")
 
 
-
-
-
-
-
-reload_matcher = on_command("reload", permission=SUPERUSER)
-
-
-@reload_matcher.handle()
+@on_command("reload", permission=SUPERUSER).handle()
 async def glist_handle(bot: Bot, e: PrivateMessageEvent):
     from . import config
     from . import cron
@@ -69,10 +59,7 @@ async def hook_handle(bot: Bot, e: PrivateMessageEvent):
     resp = f"hook结果:{res}"
     await bot.send(e, message=resp)
 
-unhook_matcher = on_command("unhook", permission=SUPERUSER)
-
-
-@unhook_matcher.handle()
+@on_command("unhook", permission=SUPERUSER).handle()
 async def unhook_handle(bot: Bot, e: PrivateMessageEvent):
     from . import wxlib
     res = await wxlib.unhookSyncMsg()
@@ -80,28 +67,11 @@ async def unhook_handle(bot: Bot, e: PrivateMessageEvent):
     await bot.send(e, message=resp)
 
 
-wxgroup_matcher = on_command("wxgroup", permission=SUPERUSER)
-
-
-@wxgroup_matcher.handle()
+@on_command("wxgroup", permission=SUPERUSER).handle()
 async def wxgroup_handle(bot: Bot, e: PrivateMessageEvent):
     from . import wxlib
     res = await wxlib.getContacts()
     await bot.send(e, message=json.dumps(res, ensure_ascii=False))
-
-cronlist_matcher = on_command("cronlist", permission=SUPERUSER)
-
-
-@cronlist_matcher.handle()
-async def cronlist_handle(bot: Bot, e: PrivateMessageEvent):
-    from . import cron
-    cron.get_cron_list()
-    crons = []
-    for job in cron.cronList:
-        crons.append(
-            f"id:{job['id']} type:{job['type']} {job['arg']}")
-    res = "\n".join(crons)
-    await bot.send(e, message=res)
 
 
 logger.info("管理端命令加载完成")

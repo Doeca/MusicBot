@@ -89,7 +89,7 @@ async def who_handle(school_id: str, gid: str, user_id: str, match):
     if not res:
         return
     info: dict = config.schoolInfo.get(school_id, {})
-    song_list = info.get('song_list',[])
+    song_list = info.get('song_list', [])
     line: str = match.group(1)
     if line == "":
         line = info['current_song_id']
@@ -279,3 +279,22 @@ async def help_handle(user_id: str, match):
     await wxlib.sendImg(user_id, f"C:\\sharefolder\\{filename}")
     # print(f"get cdn url : {cdn_url}")
     pass
+
+
+@commandReg_pri('收款码到账¥(\d+\.\d+)')
+async def help_handle(user_id: str, match):
+    price = match.group(1)
+    host = "https://vm.cquluna.top/"
+    secretkey = "88feaef9e14a466a95ce6a72881bd323"
+    if user_id == "gh_3dfda90e39d6":
+        import hashlib
+        import time
+        timestamp = str(int(time.time()))
+        md5_hash = hashlib.md5()
+        md5_hash.update(("1"+price + timestamp+secretkey
+                         ).encode('utf-8'))
+        sign = md5_hash.hexdigest()
+        url = host + f"appPush?t={timestamp}&type=1&price={price}&sign={sign}"
+        await util.httpGet(url)
+    else:
+        logger.error(f"疑似伪造收款事件：金额：{price} Userid： {user_id}")

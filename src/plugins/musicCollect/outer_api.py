@@ -201,17 +201,12 @@ async def get_operations(text: str):
 # 测试接口，通过此接口测试nonebot行为
 @app.get("/action_test")
 async def _():
-    # botids: list = [1687708097, 1563790049, 2119302278]
-    # for botid in botids:
-    #     try:
-    #         bot: Bot = get_bot(str(botid))
-    #         if bot != None:
-    #             return bot
-    #     except:
-    #         pass
+    # 获取群成员及名片
+
     bot: Bot = nonebot.get_bot()
-    #res = await bot.get_credentials(domain="https://y.qq.com")
-    #res = await bot.get_cookies()
-    res = await bot.call_api("get_credentials",domain="qzone.qq.com")
-    print(f"res:{res}")
+    res = await bot.get_group_member_list(group_id=669102357)
+    open("./2022.json", "w").write(json.dumps(res))
+    res = await bot.get_group_member_list(group_id=780916936)
+    open("./2023.json", "w").write(json.dumps(res))
+
     return {"res": 0}

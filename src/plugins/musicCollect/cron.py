@@ -18,7 +18,7 @@ cronLock = asyncio.Lock()
 
 
 async def run_start_order(school_id, tzinfo: dict):
-    #print(f"{school_id} 执行开始任务 {time.strftime('%H:%M', time.localtime())}")
+    # print(f"{school_id} 执行开始任务 {time.strftime('%H:%M', time.localtime())}")
     async with cronLock:
         info: dict = config.schoolInfo.get(school_id, {})
         setting: dict = config.schoolSettings[school_id]
@@ -77,12 +77,12 @@ async def run_start_order(school_id, tzinfo: dict):
 
 
 async def run_stop_order(school_id):
-    #print(f"{school_id} 执行停止任务 {time.strftime('%H:%M', time.localtime())}")
+    # print(f"{school_id} 执行停止任务 {time.strftime('%H:%M', time.localtime())}")
     async with cronLock:
         info: dict = config.schoolInfo.get(school_id, {})
         setting: dict = config.schoolSettings[school_id]
         if (info.get("switch_status", 0) == 0):
-            #print("已经停止，提前返回")
+            # print("已经停止，提前返回")
             return
         config.schoolInfo.pop(school_id)
         try:
@@ -141,3 +141,34 @@ async def init_cron():
 def get_cron_list():
     for job in scheduler.get_jobs():
         print(job)
+
+
+@scheduler.scheduled_job('cron', hour="10", minute='30')
+async def status_report():
+    # 向点歌测试群汇报本日点歌系统状态
+    from . import util
+    await bot.send_group_msg(group_id=762907200, message="Collecting Report...")
+    bot: Bot = get_bot()
+    hitokoto = await util.httpGet("https://v1.hitokoto.cn/?encode=text")
+    music_status = {"qq": "Unknown", "wy": "Unknown", "kg": "Unknown"}
+    wx_status = "Unknown"
+    try:
+        music_status = json.loads(s=(await util.httpGet(f"{config.system.music_api}/status")))
+        wx_status = (await wxlib.userInfo())['data']['name']
+    except:
+        pass
+
+    report_text = f"""📅 Date：{time.strftime('%m/%d/%Y', time.localtime())}
+
+------System Info------
+🐧 QQ Music：{music_status['qq']}
+⛩️ Netease：{music_status['wy']}
+🐩 Kugou Music：{music_status['kg']}
+🌠 Wechat Status：{wx_status}
+
+-------Hitokoto------
+💮 {hitokoto}
+"""
+    
+    await bot.send_group_msg(group_id=762907200, message=report_text)
+

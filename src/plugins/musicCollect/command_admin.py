@@ -1,7 +1,11 @@
 ﻿import base64
+import json
+
 from . import util
 from . import config
-import json
+
+
+from typing import Union
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg,  ArgStr
@@ -73,5 +77,12 @@ async def wxgroup_handle(bot: Bot, e: PrivateMessageEvent):
     res = await wxlib.getContacts()
     await bot.send(e, message=json.dumps(res, ensure_ascii=False))
 
+
+@on_command("test_command").handle()
+async def _(bot: Bot, e: Union[GroupMessageEvent, PrivateMessageEvent]):
+    from . import  wxlib
+    res = await wxlib.userInfo()
+    print(res)
+    pass
 
 logger.info("管理端命令加载完成")

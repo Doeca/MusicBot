@@ -37,19 +37,23 @@ link_4 = on_regex(
 
 @link_1.handle()
 async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
-    school_id = await config.get_id(str(e.group_id))
-    status = await util.get_switch(school_id)
-    if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
-        return
+    try:
+        school_id = await config.get_id(str(e.group_id))
+        status = await util.get_switch(school_id)
+        if status == False:
+            await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+            return
 
-    real_link = await util.get_realurl(link)
-    matches = re.search('&id=([0-9]{1,})', real_link)
-    if (matches == None):
+        real_link = await util.get_realurl(link)
+        matches = re.search('&id=([0-9]{1,})', real_link)
+        if (matches == None):
+            return
+        songid = matches.group(1)
+        res = await util.addTolist(bot, school_id, songid, 'wy', str(e.user_id))
+        await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    except Exception as exc:
+        await bot.send(e, message="获取歌曲信息超时，请稍后再试🥺", at_sender=True, reply_message=True)
         return
-    songid = matches.group(1)
-    res = await util.addTolist(bot, school_id, songid, 'wy', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_2.handle()

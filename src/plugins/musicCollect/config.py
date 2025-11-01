@@ -1,10 +1,15 @@
 import time
 import json
 import aiohttp
+import hashlib
+import mysql.connector
 
 from nonebot import logger, get_driver
 from pydantic import BaseModel, Extra
+from nonebot import get_plugin_config
 import asyncio
+
+
 """
 设置初始化流程：
 1. 读取学校列表
@@ -15,6 +20,7 @@ import asyncio
 1、点歌群号 groups
 2、bot在群内的群名片 cardname
 3、黑名单歌曲列表 bankeywords
+4、播放完歌单再结束播放 playfinishclose
 
 时段信息 timezone【数组】
 1、开启时间，关闭时间  settime[4]
@@ -23,15 +29,17 @@ import asyncio
 3、个人点歌数量上限 personlimit
 4、投票切割所需票数 voteneed
 5、静默模式 quietmode
+6、语种比例设置 languageset
 
 
-info字段
+info字段（相当于cache字段，每次点歌都会刷新）
 
 
 switch_status 点歌开启状态
 song_list 歌曲列表
+play_list 实际播放顺序
 order_users 点歌用户列表
-log_file 存放歌单的文件
+log_id 数据库中存放的ID
 tzinfo 当前时段的相关数据
 vote_num 投票切歌人数
 vote_list list 参与投票切歌的qq号
@@ -39,6 +47,13 @@ operation_list 针对播放器的操作列表
 current_song_id 当前播放的歌单中的歌曲id
 current_song_title 当前播放的歌曲名
 """
+
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'music_cache',
+    'password': 'Doeca1124468334',
+    'database': 'music_cache'
+}
 
 
 class Config(BaseModel, extra=Extra.ignore):
@@ -53,57 +68,34 @@ load_status = 0  # 当前开启状态
 schoolList = dict()  # id -> 学校名称列表
 schoolSettings = dict()  # 后端获取的所有原始数据
 schoolInfo = dict()  # 当前点歌开启状态、歌单等即时信息，不受初始化流程影响。
-
-
+globalConfig = dict()  # 全局配置
 lock = asyncio.Lock()
 
+# 这里也要修改为从后台读取吧
 fs = open(f"./config/music/random.store", 'r')
 random = json.loads(s=fs.read())
 fs.close()
 
 
-async def get_schoolList():
-    # 原本的从后端获取数据，因为后端获取数据还没做，就先用本地替代了
-    # async with aiohttp.ClientSession() as session:
-    #     async with session.get(f"{system.setting_domain}/get?q=schoolList") as resp:
-    #         if (resp.status != 200):
-    #             return False
-    #         global schoolList
-    #         schoolList = await resp.json()
-    #         return True
-    fs = open("./config/music/list.json")
-    global schoolList
-    schoolList = json.loads(fs.read())
-    fs.close()
-    schoolInfo.clear()  # 清空残留数据
-    return True
-
-
-async def get_schoolSettings():
-    # async with aiohttp.ClientSession() as session:
-    #     for val in schoolList.keys():
-    #         async with session.get(f"{system.setting_domain}/get", params={'q': 'schoolSettings', 'id': val}) as resp:
-    #             if (resp.status != 200):
-    #                 return False
-    #             tmp = await resp.json()
-    #             schoolSettings[val] = tmp
-    #             return True
-    for val in schoolList.keys():
-        fs = open(f"./config/music/{val}.json")
-        schoolSettings[val] = json.loads(fs.read())
-        fs.close()
-
-system = Config.parse_obj(get_driver().config)
+system = get_plugin_config(Config)
 
 
 async def init_config():
-    global system
-    system = Config.parse_obj(get_driver().config)
-    while await get_schoolList() == False:
-        time.sleep(1)
-    logger.info("学校列表读取完毕")
-    while await get_schoolSettings() == False:
-        time.sleep(1)
+    global system, schoolSettings, schoolList, schoolInfo, globalConfig
+    system = get_plugin_config(Config)
+    rawConfig = dict()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{system.setting_domain}/config/get") as resp:
+            if (resp.status != 200):
+                return False
+            rawConfig = await resp.json()
+            rawConfig = rawConfig['data']
+            global schoolList
+            schoolList = rawConfig['list']
+            schoolInfo.clear()  # 清空残留数据
+    for val in schoolList.keys():
+        schoolSettings[val] = rawConfig['settings'][val]
+    globalConfig = rawConfig['global']
     logger.info("设置信息读取完毕")
     global load_status
     load_status = 1
@@ -124,3 +116,44 @@ async def get_id(gid: str):
         if gid in schoolSettings[key]['groups']:
             return key
     return ''
+
+
+# 2. 判断某hash值是否存在
+def hash_exists(hash_value: str) -> bool:
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM song_history WHERE hash = %s LIMIT 1", (hash_value,))
+    exists = cursor.fetchone() is not None
+    cursor.close()
+    conn.close()
+    return exists
+
+# 3. 将info写到hash上（如果存在则更新，否则插入）
+
+
+def upsert_info(hash_value: str, info_value: str):
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    sql = """
+        INSERT INTO song_history (hash, info)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE info = VALUES(info)
+    """
+    cursor.execute(sql, (hash_value, info_value))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# 4. 根据hash读取info
+
+
+def get_info(hash_value: str):
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT info FROM song_history WHERE hash = %s LIMIT 1", (hash_value,))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return result[0] if result else None

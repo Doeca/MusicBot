@@ -5,7 +5,6 @@ import os
 import json
 import asyncio
 from . import config
-from . import wxlib
 from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Bot
 from nonebot_plugin_apscheduler import scheduler
@@ -34,71 +33,69 @@ async def run_start_order(school_id, tzinfo: dict):
         # 判断当前日期是否为假日或开关情况
 
         set_time = tzinfo['settime']
-        date_r = time.strftime(f"%m_%d", time.localtime())
-        # 缓存文件名：日期 月_日_设置时_设置分.log
+        date_r = time.strftime(f"%Y_%m_%d", time.localtime())
+        # 缓存ID：日期 月_日_设置时_设置分
         # 即只要开启时间不变便可续读此时段的已点歌信息
-        # 还要确保该学校文件夹存在
-        os.makedirs(f"./store/{school_id}", exist_ok=True)
-        log_file = f"{date_r}_{set_time[0]}_{set_time[1]}.log"
+        log_id = f"{school_id}_{date_r}_{set_time[0]}_{set_time[1]}"
 
         """此处判断，如果当前时段的fileLog已经存在，那么从这里读取文件恢复info信息，再进行当前用户的点歌操作"""
-        if os.path.exists(f"./store/{school_id}/{log_file}"):
-            fs = open(f"./store/{school_id}/{log_file}", "r")
-            config.schoolInfo[school_id] = json.loads(fs.read())
-            fs.close()
+        if config.hash_exists(log_id):
+            config.schoolInfo[school_id] = json.loads(config.get_info(log_id))
             logger.info("从异常数据丢失中恢复，已加载数据")
             return
         else:
             config.schoolInfo[school_id] = {}
             config.schoolInfo[school_id]['switch_status'] = 1
-            config.schoolInfo[school_id]['log_file'] = log_file
+            config.schoolInfo[school_id]['log_id'] = log_id
             config.schoolInfo[school_id]['tzinfo'] = tzinfo
             config.schoolInfo[school_id]['song_list'] = list()
+            config.schoolInfo[school_id]['play_list'] = list()
             config.schoolInfo[school_id]['order_users'] = dict()
             config.schoolInfo[school_id]['vote_num'] = 0
             config.schoolInfo[school_id]['vote_list'] = list()
             config.schoolInfo[school_id]['operation_list'] = list()
             config.schoolInfo[school_id]['current_song_id'] = 0
             config.schoolInfo[school_id]['current_song_title'] = ""
+            config.schoolInfo[school_id]['languagerecords'] = {}
 
-        resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐、酷狗音乐】的歌曲哦"
+        resp = "🥰开始点歌啦，大家分享链接到群里就可以咯\r目前支持来自【QQ音乐、网易云音乐】的歌曲哦"
         for gid in setting['groups']:
-            if gid.find("@chatroom") != -1:
-                await wxlib.changeCard(gid, "激情点歌ing")
-                await wxlib.sendMsg(gid, resp)
-            else:
-                bot: Bot = get_bot()
-                botid = (await bot.call_api("get_login_info"))['user_id']
-                await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
-                await bot.send_group_msg(group_id=gid,
-                                         message=resp)
+            bot: Bot = get_bot()
+            botid = (await bot.call_api("get_login_info"))['user_id']
+            await bot.set_group_card(group_id=gid, user_id=botid, card='激情点歌ing 分享链接到群内 即可点歌')
+            await bot.send_group_msg(group_id=gid,
+                                        message=resp)
 
-        logger.info(f"{school_id} 点歌开启，日志文件：./store/{school_id}/{log_file}")
+        logger.info(f"{school_id} 点歌开启，日志ID：{log_id}")
 
 
 async def run_stop_order(school_id):
+    # 这个任务好像没有意义了
+    # pass
     # print(f"{school_id} 执行停止任务 {time.strftime('%H:%M', time.localtime())}")
     async with cronLock:
         info: dict = config.schoolInfo.get(school_id, {})
         setting: dict = config.schoolSettings[school_id]
         if (info.get("switch_status", 0) == 0):
-            # print("已经停止，提前返回")
             return
-        config.schoolInfo.pop(school_id)
+        # 如果设置了播放完歌单再结束播放，则不清除info，只是把switch_status改为0就行了
+        if setting.get("playfinishclose", 0) == 1:
+            info['switch_status'] = 0
+            config.upsert_info(info['log_id'], json.dumps(info))
+        else:
+            config.schoolInfo.pop(school_id)
         try:
-            resp = "🦭点歌已经结束了哦，大家下次再来吧～"
             for gid in setting['groups']:
                 if gid.find("@chatroom") != -1:
-                    await wxlib.changeCard(gid, "激情点歌ing")
-                    await wxlib.sendMsg(gid, resp)
+                    await .changeCard(gid, setting['cardname'])
                 else:
                     bot: Bot = get_bot()
                     botid = (await bot.call_api("get_login_info"))['user_id']
                     await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
-                    await bot.send_group_msg(group_id=gid, message=resp)
         except Exception as e:
-            print(e)
+            logger.opt(exception=True).error("stop cron error")
             pass
+        logger.info(f"{school_id} 点歌结束")
 
 """
 当设置被更改后，应该重新进行初始化流程
@@ -117,6 +114,9 @@ async def init_cron():
     # 为每个学校创建定时任务
     for id in config.schoolList.keys():
         setting = config.schoolSettings[id]
+        if setting['switch'] == 0:
+            logger.info(f"学校：{id} 总开关未开启，跳过设置定时任务")
+            continue
         for tzinfo in setting['timezone']:
             set_time = tzinfo['settime']
             # 传递当前时段的设置信息给启动任务
@@ -143,32 +143,4 @@ def get_cron_list():
         print(job)
 
 
-@scheduler.scheduled_job('cron', hour="10", minute='30')
-async def status_report():
-    # 向点歌测试群汇报本日点歌系统状态
-    from . import util
-    await bot.send_group_msg(group_id=762907200, message="Collecting Report...")
-    bot: Bot = get_bot()
-    hitokoto = await util.httpGet("https://v1.hitokoto.cn/?encode=text")
-    music_status = {"qq": "Unknown", "wy": "Unknown", "kg": "Unknown"}
-    wx_status = "Unknown"
-    try:
-        music_status = json.loads(s=(await util.httpGet(f"{config.system.music_api}/status")))
-        wx_status = (await wxlib.userInfo())['data']['name']
-    except:
-        pass
-
-    report_text = f"""📅 Date：{time.strftime('%m/%d/%Y', time.localtime())}
-
-------System Info------
-🐧 QQ Music：{music_status['qq']}
-⛩️ Netease：{music_status['wy']}
-🐩 Kugou Music：{music_status['kg']}
-🌠 Wechat Status：{wx_status}
-
--------Hitokoto------
-💮 {hitokoto}
-"""
-    
-    await bot.send_group_msg(group_id=762907200, message=report_text)
 

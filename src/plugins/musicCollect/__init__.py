@@ -1,17 +1,24 @@
+from nonebot import logger
+from nonebot.log import default_format
+logger.add("debug.log", level="DEBUG", format=default_format, rotation="5 day")
+
+
 from . import config
 from . import cron
 from . import matcher_netease
 from . import matcher_qq
-from . import matcher_kg
 from . import outer_api
 from . import command_user
 from . import command_admin
 from . import outer_wx
 from . import loginManage
+
 import asyncio
 
 asyncio.run(config.init_config())
 asyncio.run(cron.init_cron())
+
+
 """
 初始化流程：
 1. 读取各个学校的设置信息

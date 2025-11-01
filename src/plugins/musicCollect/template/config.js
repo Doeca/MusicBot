@@ -1,12 +1,13 @@
 let apiUrl = '{{ apiUrl }}';
 let school_id = '{{ school_id }}';
-let delay = 10000;
+let delay = 12000;
 let currentID = 0;
 let playStatus = 0; // 未在播放
 let songLoaded = 0; // 没有加载完成歌曲信息
 let reloadTime = {}; // 失败后重载次数
 let tt = 0;
 let version = 1.75;
+
 docute.init({
     landing: 'landing.html',
     title: '小老虎食堂音乐播放器',
@@ -33,6 +34,7 @@ function aplayer1() {
         order: 'list',
         preload: 'auto',
         autoplay: true,
+        volume: 1,
         audio: []
     });
 
@@ -79,6 +81,7 @@ function player() {
                     let stage = 0;
                     try {
                         await operatePlayer();
+                        await sleep(1000);
                         stage = 1;
                         await loadPlayer();
                         stage = 2;

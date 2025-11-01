@@ -1,7 +1,6 @@
 ﻿import json
 from . import util
 from . import config
-from . import wxlib
 from nonebot.log import logger
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
@@ -62,6 +61,8 @@ async def next(e: GroupMessageEvent, bot: Bot):
     if (res == True):
         await util.addOperation(school_id, 'next')
         resp = "✴️已切换到下一首歌"
+        info['vote_num'] = 0 
+        info['vote_list'] = []
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
     else:
         vote_num = info['vote_num']
@@ -74,16 +75,19 @@ async def next(e: GroupMessageEvent, bot: Bot):
         async with config.lock:
             vote_num += 1
             vote_list.append(userid)
+            info['vote_num'] = vote_num
+            info['vote_list'] = vote_list
 
         if (vote_num >= vote_need):
             await util.addOperation(school_id, 'next')
             resp = "✴️切歌票数已达标，切换到下一首歌"
+            async with config.lock:
+                info['vote_num'] = 0 
+                info['vote_list'] = []
         else:
             resp = f"💢你已经参与过投票了，当前进度：{vote_num}/{vote_need}"
-
-        fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-        fs.write(json.dumps(info))
-        fs.close()
+        async with config.lock:
+            config.upsert_info(info['log_id'], json.dumps(info))
 
         await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
@@ -126,12 +130,8 @@ async def who_got(bot: Bot, e: GroupMessageEvent, arg: str = ArgStr('arg')):
         await who_matcher.finish(f"😗操作已取消")
     userid: str = song_list[id-1]['uin']
     name = f"{song_list[id-1]['name']} - {song_list[id-1]['author']}"
-    if userid.find("wx") != -1:
-        userinfo = await wxlib.getMemberInfo(userid)
-        card = f"微信用户 {userinfo['nickname']}({userinfo['account']})"
-    else:
-        stranger_info = await bot.get_stranger_info(user_id=userid)
-        card = f"{stranger_info['nickname']}({userid})"
+    stranger_info = await bot.get_stranger_info(user_id=userid)
+    card = f"{stranger_info['nickname']}({userid})"
     resp = f"👍歌曲《{name}》的点歌人是：{card}"
 
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
@@ -153,7 +153,7 @@ async def rule(bot: Bot, e: GroupMessageEvent):
         resp += f"{id}. {time[0]}--{time[1]}\n"
         resp += f" 歌单上限{v['mainlimit']}首，每人限点{v['personlimit']}首\n"
 
-    resp += "🧿支持平台: QQ音乐、网易云音乐、酷狗音乐"
+    resp += "🧿支持平台: QQ音乐、网易云音乐"
     await bot.send(e, message=resp, at_sender=True, reply_message=True)
 
 logger.info("用户端命令加载完成")

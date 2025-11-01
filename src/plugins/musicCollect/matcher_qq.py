@@ -28,36 +28,45 @@ from nonebot.log import logger
 link_1 = on_regex(
     'https:\/\/c6.y.qq.com\/base\/fcgi-bin\/u\?__=([a-zA-Z0-9]{10,15})', block=True, priority=1, rule=util.group_checker)
 link_2 = on_regex(
-    '"jumpUrl":"(https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?)"&#44;"pre', block=True, priority=2, rule=util.group_checker)
+    '"jumpUrl":"https:\/\/i.y.qq.com\/v8\/playsong.html\?.*?song(m|)id=([^\&]+?)\&.*?"&#44;"pre', block=True, priority=2, rule=util.group_checker)
 
 
 @link_1.handle()
 async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[str, RegexStr()]):
-    school_id = await config.get_id(str(e.group_id))
-    status = await util.get_switch(school_id)
-    if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+    try:
+        school_id = await config.get_id(str(e.group_id))
+        status = await util.get_switch(school_id)
+        if status == False:
+            await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+            return
+        await bot.send(e, message="正在处理中，请稍等🫡", at_sender=True, reply_message=True)
+        logger.info(f"1 link is {link}")
+        resp = await util.httpGet(link)
+        matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
+        songmid = matchObj.group(1)
+        res = await util.addTolist(bot, school_id, songmid, 'qq', str(e.user_id))
+        await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    except Exception as exc:
+        await bot.send(e, message="获取歌曲信息超时，请稍后再试🥺", at_sender=True, reply_message=True)
+        logger.debug(f"link 1 超时信息原消息: {e.message}")
         return
-    resp = await util.httpGet(link)
-    matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
-    songmid = matchObj.group(1)
-    res = await util.addTolist(bot, school_id, songmid, 'qq', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
 
 
 @link_2.handle()
 async def _(bot: Bot, e: GroupMessageEvent, link: Annotated[tuple[Any, ...], RegexGroup()]):
-    school_id = await config.get_id(str(e.group_id))
-    status = await util.get_switch(school_id)
-    if status == False:
-        await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+    try:
+        school_id = await config.get_id(str(e.group_id))
+        status = await util.get_switch(school_id)
+        if status == False:
+            await bot.send(e, message="当前不在点歌时间段内，不能点歌哦🥺", at_sender=True, reply_message=True)
+            return
+        await bot.send(e, message="正在处理中，请稍等🫡", at_sender=True, reply_message=True)
+        songid = link[1]
+        res = await util.addTolist(bot, school_id, songid, 'qq', str(e.user_id))
+        await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
+    except Exception as exc:
+        await bot.send(e, message="获取歌曲信息超时，请稍后再试🥺", at_sender=True, reply_message=True)
+        logger.debug(f"link 2 超时信息原消息: {e.message}")
         return
-    rawlink = link[0]
-    rawlink = util.unescape(rawlink)
-    resp = await util.httpGet(rawlink)
-    matchObj = re.search(r'"mid":"(.*?)"', resp, re.M | re.I)
-    songmid = matchObj.group(1)
-    res = await util.addTolist(bot, school_id, songmid, 'qq', str(e.user_id))
-    await bot.send(e, message=res['msg'], at_sender=True, reply_message=True)
-
+    
 logger.info("QQ音乐监听器创建完成")

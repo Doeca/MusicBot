@@ -4,7 +4,6 @@ import json
 import nonebot
 from . import config
 from . import util
-from . import wxlib
 from nonebot import get_bot
 from nonebot.log import logger
 from pydantic import BaseModel
@@ -18,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app: FastAPI = nonebot.get_app()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=["https://musicadmin.doeca.cc", "https://musicapi.doeca.cc"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,146 +66,133 @@ async def ret_page(request: Request, school_id: str):
 # 获取最新播放的歌曲ID
 @app.get("/getLatestID")
 async def read_id(school_id: str):
-    # 读取当前学校info，同时替代了开关功能，因为如果这里有数据那么当前肯定处于点歌开启状态
-    status = await util.get_switch(school_id)
-    info = config.schoolInfo.get(school_id, None)
-
-    if (info == None):
+    try:
+        # 读取当前学校info，同时替代了开关功能，因为如果这里有数据那么当前肯定处于点歌开启状态
+        status = await util.get_switch(school_id)
+        info = config.schoolInfo.get(school_id, None)
+        if (info == None):
+            return {"res": '-1'}
+        play_list = info['play_list']
+        for v in play_list:
+            if (v['played'] == 0):
+                return {"res": v['id']}
+        if status == False:
+            # 说明歌单已经播完了，但是开启了允许继续播完，所以才会走到这个位置，那么不继续播放随机歌曲
+            return {"res": '-1'}
+        id = random.randint(0, len(config.random)-1)
+        return {"res": id + 10000}
+    except Exception as e:
+        logger.opt(exception=True).error("get latest id wrong")
         return {"res": '-1'}
-    song_list = info['song_list']
-    for v in song_list:
-        if (v['played'] == 0):
-            return {"res": v['id']}
-    id = random.randint(0, len(config.random)-1)
-    return {"res": id + 10000}
 
 # 获取歌曲播放数据
 
 
 @app.get("/getPlayInfo")
 async def play_id(school_id: str, id: int = 1):
-    # 2024 1月5日记录：这个版本的设计下，如果bot端离线则不能正常播放歌曲，需要调整
-    status = await util.get_switch(school_id)
-    info: dict = config.schoolInfo.get(school_id, None)
-    if (info == None):
-        return {"res": '-1'}
-
-    # 读取必要设置
-    setting: dict = config.schoolSettings[school_id]
-
-    async with config.lock:
-        info['vote_num'] = 0
-        info['vote_list'] = list()
-
-    if id >= 10000:
-        v = config.random[id-10000]
-        if id == info.get('last_song_id', -1):
+    try:
+        if id < 1:
+            return {"res": '-1'}
+        await util.get_switch(school_id)
+        info: dict = config.schoolInfo.get(school_id, None)
+        if (info == None):
+            return {"res": '-1'}
+        play_list = info.get('play_list', [])
+        # 首先找到song_info
+        song_info = {}
+        if id >= 50000:
+            for v in play_list:
+                if (v['id'] == id):
+                    song_info = v['info']
+        elif id >= 10000:
+            song_info = config.random[id-10000]
+        else:
+            song_info = info.get('song_list', [])[id-1]
+        if id == info.get('current_song_id', -1):
             # 加载出错，重新加载歌曲，不重新发送播放通知
-            return v
+            return song_info
+        
+        # logger.info(json.dumps(song_info))
         async with config.lock:
-            info["current_song_id"] = id
-            info['last_song_id'] = id
-            info["current_song_title"] = f"{v['name']} - {v['author']}"
+            info['current_song_id'] = id
+            info['current_song_title'] = f"{song_info['name']} - {song_info['author']}"
+            # logger.info(f"{song_info['name']} - {song_info['author']}")
+            config.upsert_info(info['log_id'], json.dumps(info))
 
-        resp = f"🅿️正在播放随机歌曲：{v['name']} - {v['author']}"
-        card = f"当前：{v['name']} - {v['author']}"
+        # 如果id在列表里，则标记播放成功，下次获取id就会返回新的id了
+        for v in play_list:
+            if (v['played'] == 0) and (v['id'] == id):
+                async with config.lock:
+                    v['played'] = 1
+                    config.upsert_info(info['log_id'], json.dumps(info))
+        if id >= 50000:
+            return song_info  # 预留的tts播报接口，不向群内发送消息
+
+        resp = f"🅿️正在播放{'随机' if id >=10000 else f'第{id}首'}歌曲：{song_info['name']} - {song_info['author']}"
+        card = f"当前：{song_info['name']} - {song_info['author']}"
         try:
+            setting: dict = config.schoolSettings[school_id]
             for gid in setting['groups']:
                 # 若开启静默模式则不发送消息，只修改群名片
                 if info["tzinfo"].get("quietmode", 0) == 1:
-                    if gid.find("@chatroom") != -1:
-                        await wxlib.changeCard(gid, card)
-                    else:
-                        bot: Bot = get_bot()
-                        botid = (await bot.call_api("get_login_info"))['user_id']
-                        await bot.set_group_card(group_id=gid, user_id=botid, card=card)
-                    continue
-                if gid.find("@chatroom") != -1:
-                    await wxlib.sendMsg(gid, resp)
-                else:
                     bot: Bot = get_bot()
-                    await bot.send_group_msg(group_id=gid, message=resp)
+                    botid = (await bot.call_api("get_login_info"))['user_id']
+                    await bot.set_group_card(group_id=gid, user_id=botid, card=card)
+                    continue
+
+                bot: Bot = get_bot()
+                await bot.send_group_msg(group_id=gid, message=resp)
         except Exception as e:
             logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
+            logger.opt(exception=True).error("get playinfo wrong[1]")
             pass
-        return v
-
-    song_list = info.get('song_list', [])
-    for v in song_list:
-        if (v['id'] == id):
-            if (v['played'] == 1):
-                # 加载出错，重新加载歌曲，不重新发送播放通知
-                return v
-            async with config.lock:
-                v['played'] = 1
-                info["current_song_id"] = id
-                info["current_song_title"] = f"{v['name']} - {v['author']}"
-            fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-            fs.write(json.dumps(info))
-            fs.close()
-
-            resp = f"🅿️正在播放第{id}首歌：{v['name']} - {v['author']}"
-            card = f"当前：{v['name']} - {v['author']}"
-            try:
-                for gid in setting['groups']:
-                    # 若开启静默模式则不发送消息，只修改群名片
-                    if info["tzinfo"].get("quietmode", 0) == 1:
-                        if gid.find("@chatroom") != -1:
-                            await wxlib.changeCard(gid, card)
-                        else:
-                            bot: Bot = get_bot()
-                            botid = (await bot.call_api("get_login_info"))['user_id']
-                            await bot.set_group_card(group_id=gid, user_id=botid, card=card)
-                        continue
-
-                    if gid.find("@chatroom") != -1:
-                        await wxlib.sendMsg(gid, resp)
-                    else:
-                        bot: Bot = get_bot()
-                        botid = (await bot.call_api("get_login_info"))['user_id']
-                        await bot.send_group_msg(group_id=gid, message=resp)
-            except Exception as e:
-                logger.error(f"发送消息失败，可能是bot离线了，错误信息：{e}")
-                pass
-            return v
-    return {"res": '-1'}
+        return song_info
+    except Exception as e:
+        logger.opt(exception=True).error("get playinfo wrong[2]")
+        return {"res": '-1'}
 
 
 @app.get("/getOperations")
 async def get_operations(school_id: str):
-    status = await util.get_switch(school_id)
-    info = config.schoolInfo.get(school_id, None)
-    if (info == None):
-        return {"res": '-1'}
-    opertaionList = info['operation_list']
-    res = opertaionList[:]
-    async with config.lock:
-        opertaionList.clear()
-
-    fs = open(f"./store/{school_id}/{info['log_file']}", "w")
-    fs.write(json.dumps(info))
-    fs.close()
-    return res
+    try:
+        status = await util.get_switch(school_id)
+        info = config.schoolInfo.get(school_id, None)
+        if (info == None):
+            return {"res": '-1'}
+        opertaionList = info['operation_list']
+        res = opertaionList[:]
+        async with config.lock:
+            opertaionList.clear()
+            config.upsert_info(info['log_id'], json.dumps(info))
+        return res
+    except Exception as e:
+        logger.opt(exception=True).error("get operations wrong")
+        return {"res": []}
 
 
 # 通知接口，可通过此接口向我发送通知
 @app.get("/notify")
 async def get_operations(text: str):
-    bot: Bot = get_bot()
-    await bot.send_private_msg(user_id=1124468334,
-                               message=base64.b64decode(text).decode("utf-8"))
+    try:
+        bot: Bot = get_bot()
+        logger.debug(f"notify: {text}")
+        await bot.send_private_msg(user_id=1124468334,
+                                   message=base64.b64decode(text).decode("utf-8"))
+    except Exception as e:
+        logger.opt(exception=True).error("notify wrong")
+        return {"res": -1}
     return {"res": 0}
 
 
-# 测试接口，通过此接口测试nonebot行为
-@app.get("/action_test")
+@app.get("/heartbeat")
 async def _():
-    # 获取群成员及名片
+    return {"res": 0}
 
-    bot: Bot = nonebot.get_bot()
-    res = await bot.get_group_member_list(group_id=669102357)
-    open("./2022.json", "w").write(json.dumps(res))
-    res = await bot.get_group_member_list(group_id=780916936)
-    open("./2023.json", "w").write(json.dumps(res))
 
+@app.get("/config_reload")
+async def _():
+    from . import config
+    from . import cron
+    await config.init_config()
+    await cron.init_cron()
     return {"res": 0}

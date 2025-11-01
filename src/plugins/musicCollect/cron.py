@@ -86,12 +86,9 @@ async def run_stop_order(school_id):
             config.schoolInfo.pop(school_id)
         try:
             for gid in setting['groups']:
-                if gid.find("@chatroom") != -1:
-                    await .changeCard(gid, setting['cardname'])
-                else:
-                    bot: Bot = get_bot()
-                    botid = (await bot.call_api("get_login_info"))['user_id']
-                    await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
+                bot: Bot = get_bot()
+                botid = (await bot.call_api("get_login_info"))['user_id']
+                await bot.set_group_card(group_id=gid, user_id=botid, card=setting['cardname'])
         except Exception as e:
             logger.opt(exception=True).error("stop cron error")
             pass

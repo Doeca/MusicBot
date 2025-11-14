@@ -2,7 +2,7 @@ import time
 import json
 import aiohttp
 import hashlib
-import mysql.connector
+import sqlite3
 
 from nonebot import logger, get_driver
 from pydantic import BaseModel, Extra
@@ -48,20 +48,10 @@ current_song_id 当前播放的歌单中的歌曲id
 current_song_title 当前播放的歌曲名
 """
 
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'music_cache',
-    'password': 'Doeca1124468334',
-    'database': 'music_cache'
-}
-
-
 class Config(BaseModel, extra=Extra.ignore):
     backend_url: str
     setting_domain: str
     music_api: str
-    wx_host: str
-    wx_port: int
 
 
 load_status = 0  # 当前开启状态
@@ -78,6 +68,80 @@ fs.close()
 
 
 system = get_plugin_config(Config)
+
+
+
+
+"""
+通过群号获取学校ID
+
+此逻辑下禁止如下行为：
+多个学校ID共用了一个群号，那么就会有问题，所以前端的模板设置里不应该设置真实的群号
+"""
+
+
+async def get_id(gid: str):
+    if gid == "":
+        return ''
+    for key in schoolSettings.keys():
+        if gid in schoolSettings[key]['groups']:
+            return key
+    return ''
+
+def init_db():
+    conn = sqlite3.connect('music_cache.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS song_history (
+            hash TEXT PRIMARY KEY,
+            info TEXT
+        )
+    ''')
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+# 2. 判断某hash值是否存在
+def hash_exists(hash_value: str) -> bool:
+    conn = sqlite3.connect('music_cache.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM song_history WHERE hash = ? LIMIT 1", (hash_value,))
+    exists = cursor.fetchone() is not None
+    cursor.close()
+    conn.close()
+    return exists
+
+# 3. 将info写到hash上（如果存在则更新，否则插入）
+
+
+def upsert_info(hash_value: str, info_value: str):
+    conn = sqlite3.connect('music_cache.db')
+    cursor = conn.cursor()
+    sql = """
+        INSERT INTO song_history (hash, info)
+        VALUES (?, ?)
+        ON CONFLICT(hash) DO UPDATE SET info=excluded.info
+    """
+    cursor.execute(sql, (hash_value, info_value))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# 4. 根据hash读取info
+
+
+def get_info(hash_value: str):
+    conn = sqlite3.connect('music_cache.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT info FROM song_history WHERE hash = ? LIMIT 1", (hash_value,))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return result[0] if result else None
+
 
 
 async def init_config():
@@ -100,60 +164,4 @@ async def init_config():
     global load_status
     load_status = 1
 
-
-"""
-通过群号获取学校ID
-
-此逻辑下禁止如下行为：
-多个学校ID共用了一个群号，那么就会有问题，所以前端的模板设置里不应该设置真实的群号
-"""
-
-
-async def get_id(gid: str):
-    if gid == "":
-        return ''
-    for key in schoolSettings.keys():
-        if gid in schoolSettings[key]['groups']:
-            return key
-    return ''
-
-
-# 2. 判断某hash值是否存在
-def hash_exists(hash_value: str) -> bool:
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT 1 FROM song_history WHERE hash = %s LIMIT 1", (hash_value,))
-    exists = cursor.fetchone() is not None
-    cursor.close()
-    conn.close()
-    return exists
-
-# 3. 将info写到hash上（如果存在则更新，否则插入）
-
-
-def upsert_info(hash_value: str, info_value: str):
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    sql = """
-        INSERT INTO song_history (hash, info)
-        VALUES (%s, %s)
-        ON DUPLICATE KEY UPDATE info = VALUES(info)
-    """
-    cursor.execute(sql, (hash_value, info_value))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-# 4. 根据hash读取info
-
-
-def get_info(hash_value: str):
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT info FROM song_history WHERE hash = %s LIMIT 1", (hash_value,))
-    result = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return result[0] if result else None
+    init_db()

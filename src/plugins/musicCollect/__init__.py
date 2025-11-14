@@ -1,6 +1,6 @@
 from nonebot import logger
 from nonebot.log import default_format
-logger.add("debug.log", level="DEBUG", format=default_format, rotation="5 day")
+logger.add("logs/debug.log", level="DEBUG", format=default_format, rotation="5 day")
 
 
 from . import config
@@ -10,7 +10,6 @@ from . import matcher_qq
 from . import outer_api
 from . import command_user
 from . import command_admin
-from . import outer_wx
 from . import loginManage
 
 import asyncio

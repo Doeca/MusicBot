@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app: FastAPI = nonebot.get_app()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://musicadmin.doeca.cc", "https://musicapi.doeca.cc"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

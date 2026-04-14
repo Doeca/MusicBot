@@ -33,8 +33,9 @@ async def ret_page(request: Request, school_id: str):
     if (config.schoolSettings.get(school_id, None) == None):
         return {"res": '-1'}
     return templates.TemplateResponse(
-        "index.html",
-        {
+        request=request,
+        name="index.html",
+        context={
             "request": request,
             "school_id": school_id
         }
@@ -44,8 +45,9 @@ async def ret_page(request: Request, school_id: str):
 @app.get("/landing.html")
 async def ret_page(request: Request):
     return templates.TemplateResponse(
-        "landing.html",
-        {
+        request=request,
+        name="landing.html",
+        context={
             "request": request
         }
     )
@@ -54,8 +56,9 @@ async def ret_page(request: Request):
 @app.get("/config.js")
 async def ret_page(request: Request, school_id: str):
     return templates.TemplateResponse(
-        "config.js",
-        {
+        request=request,
+        name="config.js",
+        context={
             "request": request,
             "apiUrl": config.system.backend_url,
             "school_id": school_id

@@ -6,7 +6,7 @@ let playStatus = 0; // 未在播放
 let songLoaded = 0; // 没有加载完成歌曲信息
 let reloadTime = {}; // 失败后重载次数
 let tt = 0;
-let version = 1.75;
+let version = 1.8;
 
 docute.init({
     landing: 'landing.html',
